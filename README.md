@@ -20,25 +20,22 @@ The project include a javascript backend, storage on mongo db, and photo storage
 <table align="center">
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/33be3a7d-36ab-47fc-a1e0-b9db4f212577?raw=true" height="400">
+      <img src="https://github.com/user-attachments/assets/b2d15719-96ae-4cea-9a5a-489e45c8f420?raw=true" height="400">
       <p>Home Page</p>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/8a17dfa5-0d6a-4c54-84da-b288afbb22e9?raw=true" height="400">
+      <img src="https://github.com/user-attachments/assets/1b94aee2-f891-49f5-a7d7-1147ae4009e2?raw=true" height="400">
       <p>Search Page</p>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/71ac1656-812b-489a-ad6e-5a8e1aa571ab?raw=true" height="400">
+      <img src="https://github.com/user-attachments/assets/80ef7139-d836-4680-acaa-4b14a4797f95?raw=true" height="400">
       <p>Saved Page</p>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/93e568b3-51bc-46f9-8419-8635020523eb?raw=true" height="400">
+      <img src="https://github.com/user-attachments/assets/d4324510-6879-442b-a312-d3221072769a?raw=true" height="400">
       <p>Profile Page</p>
     </td>
   </tr>
 </table>
-![Screenshot_20251028_130243](https://github.com/user-attachments/assets/119f6756-d643-4eea-bbb4-374e6eb4ec0b)
-![Screenshot_20251028_130237](https://github.com/user-attachments/assets/01e7bd2d-bab3-4e9c-b657-5c848f0874a8)
-![Screenshot_20251028_130231](https://github.com/user-attachments/assets/e7296909-7ab8-4492-830f-116e0acfc2d9)
-![Screenshot_20251028_130247](https://github.com/user-attachments/assets/c51d3a89-fd73-4faa-bca3-efffc77fd2eb)
+
 
