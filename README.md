@@ -15,7 +15,7 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
-The project include a javascript backend, storage on mongo db, and photo storage on cloudinary.
+The project includes a javascript backend, storage on mongo db and photo storage on cloudinary.
 
 <table align="center">
   <tr>
