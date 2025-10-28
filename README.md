@@ -37,4 +37,7 @@ The project include a javascript backend, storage on mongo db, and photo storage
     </td>
   </tr>
 </table>
-
+![Screenshot_20251028_130243](https://github.com/user-attachments/assets/ce988c60-e1b3-4beb-886c-2bffbc928150)
+![Screenshot_20251028_130237](https://github.com/user-attachments/assets/38e21c15-c264-457e-8703-4844168137d0)
+![Screenshot_20251028_130231](https://github.com/user-attachments/assets/ca253918-69b2-47a6-959d-bc0a680ac65e)
+![Screenshot_20251028_130247](https://github.com/user-attachments/assets/3e2d37b4-a352-4564-8d16-770e665a1a3e)
