@@ -19,6 +19,7 @@ class _ContactInformationState extends State<ContactInformation> {
   @override
   Widget build(BuildContext context) {
     PropertiesViewModel viewmodel = Provider.of<PropertiesViewModel>(context);
+
     setState(() {
       pageNumber = 4;
     });
@@ -26,43 +27,48 @@ class _ContactInformationState extends State<ContactInformation> {
     Widget contactInfoForms = Form(
       key: _contactInfoFormKey,
       child: uploadFlow(
+        context,
         children: [
           Text("Contact information", style: context.titleLarge),
           FadedText(
             padding: 0,
-            text: "How should interested buyers contact you?",
+            "How should interested buyers contact you?",
             style: context.titleSmall,
           ),
-          labeledTextField(
+          PlainTextField(
             initialText: "John Doe",
-            label: Text("Full name"),
+            hint: Text("Full name"),
             onChanged: (fullName) {
               _fullName = fullName;
             },
           ),
-          labeledTextField(
+          PlainTextField(
             initialText: "0712345678",
-            label: Text("Phone number"),
+            hint: Text("Phone number"),
             onChanged: (number) {
               _number = number;
             },
           ),
-          labeledTextField(
+          PlainTextField(
             initialText: "william.henry.harrison@example-pet-store.com",
-            label: Text("Email address"),
+            hint: Text("Email address"),
             onChanged: (emailAddress) {
               _emailAddress = emailAddress;
             },
           ),
           Text("Preview", style: context.titleLarge),
           Center(
-            child: mainCard(
-              property: bufferPropertyObject,
+            child: homeCard(
+              viewmodel: viewmodel,
+              property: viewmodel.uploadProperty,
               onTap: () {
-                navigate(path: detailPath, index: viewmodel.properties.length);
+                navigate(path: detailPath, extra: viewmodel.properties.length);
               },
               context: context,
-              onLiked: () {},
+              iconButton: IconButton(
+                onPressed: () async {},
+                icon: Icon(cancelIcon, color: Colors.red),
+              ),
             ),
           ),
         ],
@@ -108,19 +114,21 @@ class _ContactInformationState extends State<ContactInformation> {
       ),
     );
 
-    return Stack(
-      children: [
-        contactInfoForms,
-        _isPropertyUploading ? loadingIcon : Container(),
-      ],
+    return Scaffold(
+      body: Stack(
+        children: [
+          contactInfoForms,
+          _isPropertyUploading ? loadingIcon : Container(),
+        ],
+      ),
     );
   }
 }
 
-void populateContactInfo() {
-  bufferPropertyObject.contactName = _fullName;
-  bufferPropertyObject.contactNumber = _number;
-  bufferPropertyObject.contactEmail = _emailAddress;
+void populateContactInfo(PropertiesViewModel viewmodel) {
+  viewmodel.uploadProperty.contactName = _fullName;
+  viewmodel.uploadProperty.contactNumber = _number;
+  viewmodel.uploadProperty.contactEmail = _emailAddress;
 }
 
 Future<void> submitListing(
@@ -129,7 +137,7 @@ Future<void> submitListing(
   required Function onEnd,
 }) async {
   onStart();
-  await propertiesViewModel.addProperties(bufferPropertyObject);
+  await propertiesViewModel.createProperty();
   onEnd();
   globalBuildContext?.go(homePath);
 }

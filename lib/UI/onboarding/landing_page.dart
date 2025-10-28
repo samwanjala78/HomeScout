@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:real_estate/UI/ui.dart';
@@ -14,12 +16,16 @@ class SignInPage extends StatefulWidget {
   State<SignInPage> createState() => _SignInPageState();
 }
 
-var _isLoginPressed = false;
+var _isLoginPressed = true;
+var _obscurePass = true;
+var _registeringUser = false;
+String? _emailErrorText;
+String? _passErrorText;
 
 class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
-    Icon icon = Icon(homeIcon, size: 40.0);
+    Icon icon = Icon(homeIcon, size: 40.0, color: Colors.blue);
     PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(context);
 
     Widget welcomeText = Column(
@@ -31,91 +37,164 @@ class _SignInPageState extends State<SignInPage> {
         ),
 
         FadedText(
-          text: "Your one stop shop for all your property needs",
+          "Your one stop shop for all your property needs",
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
     );
 
-    Widget signInWithButtons = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      spacing: paddingValue,
-      children: [
-        roundedButton(
-          onPressed: () {},
-          child: SpacedRow(
-            spacing: paddingValue / 4,
-            children: [
-              Icon(facebookIcon, size: 20),
-              Text("Facebook", style: context.bodyMedium),
-            ],
-          ),
+    Widget signInWithGoogle = SizedBox(
+      width: 300,
+      child: roundedButton(
+        onPressed: () {
+          handleSignIn(); /*todo*/
+        },
+        child: SpacedRow(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: spacingValue / 4,
+          children: [
+            loadSVG(
+              Assets.icons.google,
+              lightDarkIcon: false,
+              height: 20,
+              width: 20,
+              context: context,
+            ),
+            Text("Google", style: context.bodyMedium),
+          ],
         ),
-        roundedButton(
-          onPressed: () {
-            handleSignIn(); /*todo*/
-          },
-          child: SpacedRow(
-            spacing: paddingValue / 4,
-            children: [
-              loadSVG(
-                Assets.icons.google,
-                lightDarkIcon: false,
-                height: 20,
-                width: 20,
-                context: context,
-              ),
-              Text("Google", style: context.bodyMedium),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
+
+    Color blue = Colors.blue;
+    Color grey = context.getBrightness == Brightness.dark
+        ? Colors.grey.shade800
+        : Colors.grey.shade300;
 
     Widget signupSigninButtons = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
-      spacing: paddingValue,
+      spacing: spacingValue,
       children: [
         AnimatedButton(
+          key: ValueKey("Login"),
           onPressed: () {
-            setState(() => _isLoginPressed = false);
+            setState(() {
+              _isLoginPressed = true;
+              _emailErrorText = null;
+              _passErrorText = null;
+            });
           },
-          begin: _isLoginPressed ? Colors.blue : Colors.grey,
-          end: _isLoginPressed ? Colors.grey : Colors.blue,
-          child: Text('Sign up'),
+          begin: _isLoginPressed ? grey : blue,
+          end: _isLoginPressed ? blue : grey,
+          child: Text('Login'),
         ),
         AnimatedButton(
+          key: ValueKey("Signup"),
           onPressed: () {
-            setState(() => _isLoginPressed = true);
+            setState(() {
+              _isLoginPressed = false;
+              _emailErrorText = null;
+              _passErrorText = null;
+            });
           },
-          begin: _isLoginPressed ? Colors.grey : Colors.blue,
-          end: _isLoginPressed ? Colors.blue : Colors.grey,
-          child: Text('Login'),
+          begin: _isLoginPressed ? blue : grey,
+          end: _isLoginPressed ? grey : blue,
+          child: Text('Sign up'),
         ),
       ],
     );
 
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: SpacedColumn(
-            children: <Widget>[
-              icon,
-              welcomeText,
-              FadedText(text: "Sign in with", style: context.bodyLarge),
-              signInWithButtons,
-              FadedText(
-                text: "Or continue with email",
-                style: context.bodyLarge,
-              ),
-              signupSigninButtons,
-              _isLoginPressed
-                  ? loginForm(const ValueKey('login'))
-                  : signupForm(const ValueKey('signup'), context, viewModel),
-            ],
-          ),
+    Widget login = loginForm(
+      context: context,
+      viewmodel: viewModel,
+      onError: (response) {
+        Map<String, dynamic> errorBody = jsonDecode(response.body);
+        if (response.statusCode == 400) {
+          setState(() {
+            if (errorBody.containsKey("emailError")) {
+              _emailErrorText = errorBody["emailError"];
+            } else {
+              _passErrorText = errorBody["passError"];
+            }
+          });
+        } else if (response.statusCode == 500) {
+          toast(errorBody["error"]);
+        }
+      },
+      passErrorText: _passErrorText,
+      loginBegin: () {
+        setState(() {
+          _registeringUser = true;
+        });
+      },
+      loginEnd: () {
+        _registeringUser = false;
+      },
+      obscurePass: _obscurePass,
+      onShowPassPress: () {
+        setState(() {
+          _obscurePass = !_obscurePass;
+        });
+      },
+      emailErrorText: _emailErrorText,
+    );
+
+    Widget signUp = signupForm(
+      context: context,
+      viewmodel: viewModel,
+      obscurePass: _obscurePass,
+      emailErrorText: _emailErrorText,
+      onShowPassPress: () {
+        setState(() {
+          _obscurePass = !_obscurePass;
+        });
+      },
+      onError: (response) {
+        String error = jsonDecode(response.body)["error"];
+        if (response.statusCode == 400) {
+          setState(() {
+            _emailErrorText = error;
+          });
+        } else if (response.statusCode == 500) {
+          toast(error);
+        }
+      },
+      registerBegin: () {
+        setState(() {
+          _registeringUser = true;
+        });
+      },
+      registerEnd: () {
+        _registeringUser = false;
+      },
+    );
+
+    Widget body = IndexedStack(
+      index: _isLoginPressed ? 0 : 1,
+      children: [login, signUp],
+    );
+
+    Widget landingPage = SingleChildScrollView(
+      key: ValueKey("LandingScrollview"),
+      child: SpacedColumn(
+        key: ValueKey("LandingColumn"),
+        children: <Widget>[
+          icon,
+          welcomeText,
+          FadedText("Sign in with", style: context.bodyLarge),
+          signInWithGoogle,
+          FadedText("Or continue with email", style: context.bodyLarge),
+          signupSigninButtons,
+          SizedBox(width: context.getMaxWidth, child: body),
+        ],
+      ),
+    );
+
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [landingPage, _registeringUser ? loadingIcon : Container()],
         ),
       ),
     );

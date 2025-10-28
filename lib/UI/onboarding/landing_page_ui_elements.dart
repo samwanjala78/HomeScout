@@ -1,23 +1,49 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_intl_phone_field/countries.dart';
 import 'package:flutter_intl_phone_field/flutter_intl_phone_field.dart';
+import 'package:go_router/go_router.dart';
+import 'package:http/http.dart';
 import 'package:real_estate/UI/ui.dart';
 import 'package:real_estate/constants/ui_constants.dart';
 import 'package:real_estate/main.dart';
+import 'package:real_estate/network/network_util.dart';
 import 'package:real_estate/util/util.dart';
 
 import '../../data/viewmodel.dart';
 
-Widget loginForm(Key? key) {
-  final logInFormKey = GlobalKey<FormState>();
+final _logInFormKey = GlobalKey<FormState>();
+
+String userEmail = "";
+String userPassword = "";
+
+Widget loginForm({
+  Key? key,
+  required PropertiesViewModel viewmodel,
+  required Function(Response response) onError,
+  required Function loginBegin,
+  required Function loginEnd,
+  required bool obscurePass,
+  String? emailErrorText,
+  String? passErrorText,
+  required Function onShowPassPress,
+  required BuildContext context,
+}) {
   return Form(
-    key: logInFormKey,
+    key: _logInFormKey,
     child: SpacedColumn(
       key: key,
       padding: 0,
       children: [
         PlainTextField(
+          key: ValueKey("Email"),
+          autofillHints: const [AutofillHints.email],
+          errorText: emailErrorText,
           hint: Text("Email"),
+          onChanged: (email) {
+            userEmail = email;
+          },
           validator: (value) {
             final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
             if (!emailRegex.hasMatch(value!)) {
@@ -26,44 +52,101 @@ Widget loginForm(Key? key) {
             return null;
           },
         ),
-        PlainTextField(hint: Text("Password")),
+        PlainTextField(
+          key: ValueKey("Password"),
+          hint: Text("Password"),
+          autofillHints: const [AutofillHints.password],
+          obscureText: obscurePass,
+          errorText: passErrorText,
+          onChanged: (password) {
+            userPassword = password;
+          },
+          suffixIcon: IconButton(
+            onPressed: () {
+              onShowPassPress();
+            },
+            icon: Icon(Icons.remove_red_eye_outlined),
+          ),
+        ),
         roundedButton(
-          onPressed: () {
-            logInFormKey.currentState?.validate();
+          key: ValueKey("login"),
+          onPressed: () async {
+            loginBegin();
+            log(userEmail);
+            viewmodel.currentUser = await NetworkLayer.signIn(
+              userEmail: userEmail,
+              userPassword: userPassword,
+            );
+            loginEnd();
+            if (_logInFormKey.currentState!.validate() &&
+                viewmodel.currentUser != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                context.go(homePath);
+              });
+            }
           },
           child: Text("Login"),
+        ),
+
+        roundedButton(
+          key: ValueKey("forgotPassword"),
+          onPressed: () async {
+            navigate(path: emailPath);
+          },
+          child: Text("Forgot password"),
         ),
       ],
     ),
   );
 }
 
-Widget signupForm(Key? key, BuildContext context, PropertiesViewModel viewmodel) {
-  final signUpFormKey = GlobalKey<FormState>();
-  User currentUser = User(firstName: "firstName", lastName: "lastName", email: "email", phoneNumber: "phoneNumber", password: "password");
+User currentUser = User(
+  firstName: "firstName",
+  lastName: "lastName",
+  email: "email",
+  phoneNumber: "phoneNumber",
+  password: "password",
+);
+
+final _signUpFormKey = GlobalKey<FormState>();
+
+Widget signupForm({
+  Key? key,
+  required BuildContext context,
+  required PropertiesViewModel viewmodel,
+  required bool obscurePass,
+  String? emailErrorText,
+  required Function(Response response) onError,
+  required Function onShowPassPress,
+  required Function registerBegin,
+  required Function registerEnd,
+}) {
   return Form(
-    key: signUpFormKey,
+    key: _signUpFormKey,
     child: SpacedColumn(
       key: key,
       padding: 0,
       children: [
         Row(
-          spacing: paddingValue / 4,
+          spacing: spacingValue / 4,
           children: [
             Expanded(
               child: PlainTextField(
+                key: ValueKey("First name"),
                 hint: Text("First name"),
                 autofillHints: const [AutofillHints.namePrefix],
-                onChanged: (firstName){
+                onChanged: (firstName) {
+                  log(firstName);
                   currentUser.firstName = firstName;
                 },
               ),
             ),
             Expanded(
               child: PlainTextField(
+                key: ValueKey("Last name"),
                 hint: Text("Last name"),
                 autofillHints: const [AutofillHints.nameSuffix],
-                onChanged: (lastName){
+                onChanged: (lastName) {
                   currentUser.lastName = lastName;
                 },
               ),
@@ -71,8 +154,10 @@ Widget signupForm(Key? key, BuildContext context, PropertiesViewModel viewmodel)
           ],
         ),
         PlainTextField(
+          key: ValueKey("Email"),
           hint: Text("Email"),
           autofillHints: const [AutofillHints.email],
+          errorText: emailErrorText,
           validator: (value) {
             final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
             if (!emailRegex.hasMatch(value!)) {
@@ -80,40 +165,34 @@ Widget signupForm(Key? key, BuildContext context, PropertiesViewModel viewmodel)
             }
             return null;
           },
-          onChanged: (email){
+          onChanged: (email) {
             currentUser.email = email;
           },
         ),
         IntlPhoneField(
+          key: ValueKey("Phone number"),
           disableLengthCheck: true,
           showDropdownIcon: false,
           decoration: InputDecoration(
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide.none,
-              borderRadius: BorderRadius.circular(radius),
+              borderRadius: BorderRadius.circular(999),
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.blue, width: 2),
-              borderRadius: BorderRadius.circular(radius),
+              borderRadius: BorderRadius.circular(999),
             ),
             errorBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 1.5),
-              borderRadius: BorderRadius.circular(radius),
+              borderRadius: BorderRadius.circular(999),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2),
-              borderRadius: BorderRadius.circular(radius),
+              borderRadius: BorderRadius.circular(999),
             ),
             hint: Text("Phone number"),
-            hintStyle: TextStyle(
-              color: context.brightness == Brightness.dark
-                  ? Colors.black
-                  : Colors.white,
-            ),
             filled: true,
-            fillColor: context.brightness == Brightness.dark
-                ? Colors.grey.shade800
-                : Colors.grey.shade300,
+            fillColor: context.backgroundColor,
           ),
           initialCountryCode: 'KE',
           countries: countries
@@ -129,21 +208,29 @@ Widget signupForm(Key? key, BuildContext context, PropertiesViewModel viewmodel)
           },
         ),
         PlainTextField(
+          key: ValueKey("Password"),
           hint: Text("Password"),
-          autofillHints: const [AutofillHints.password],
-          obscureText: true,
-          onChanged: (password){
+          autofillHints: const [AutofillHints.newPassword],
+          obscureText: obscurePass,
+          onChanged: (password) {
             currentUser.password = password;
           },
-          suffixIcon: IconButton(onPressed: (){
-
-          }, icon: Icon(Icons.remove_red_eye_outlined)),
+          suffixIcon: IconButton(
+            onPressed: () {
+              onShowPassPress();
+            },
+            icon: Icon(Icons.remove_red_eye_outlined),
+          ),
         ),
         roundedButton(
-          onPressed: () {
-            viewmodel.currentUser = currentUser;
-            if(signUpFormKey.currentState!.validate()){
-              WidgetsBinding.instance.addPostFrameCallback((_) {
+          key: ValueKey("Signup_button"),
+          onPressed: () async {
+            registerBegin();
+            viewmodel.currentUser = await NetworkLayer.signUp(currentUser);
+            registerEnd();
+            if (_signUpFormKey.currentState!.validate() &&
+                viewmodel.currentUser != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
                 navigate(path: profileSetupPath);
               });
             }

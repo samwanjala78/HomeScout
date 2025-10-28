@@ -1,66 +1,212 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:location/location.dart';
 import 'package:real_estate/network/network_util.dart';
+import 'package:real_estate/util/util.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../gen/assets.gen.dart';
 
 class PropertiesViewModel extends ChangeNotifier {
-  PropertiesViewModel() {
-    fetchProperties();
-    fetchLikedProperties();
+  String? userId;
+
+  Future<void> initApp() async {
+    await getCount();
+    await getProperties();
+    fetchPopular();
+    await fetchSavedProperties();
+    final prefs = await SharedPreferences.getInstance();
+    userId = prefs.getString("userId");
+    log("startup userId: $userId");
+    if (userId != null) {
+      await fetchAccount(
+        userId: userId!,
+      );
+    }
   }
 
+  Property uploadProperty = Property(
+    features: [],
+    imageUrls: [],
+    liked: false,
+    title: "",
+    location: "",
+    price: "",
+    rating: 4.5,
+    bedrooms: "5",
+    bathrooms: "5",
+    area: "area",
+    type: PropertyType.forRent.type,
+    views: 0,
+    contactEmail: "william.henry.harrison@example-pet-store.com",
+    contactNumber: "0712345678",
+    contactName: "John Doe",
+    lat: 0,
+    lng: 0,
+  );
+
+  void disposeProperty() {
+    uploadProperty = Property(
+      features: [],
+      imageUrls: [],
+      liked: false,
+      title: "",
+      location: "",
+      price: "",
+      rating: 0,
+      bedrooms: "",
+      bathrooms: "",
+      area: "area",
+      type: PropertyType.forRent.type,
+      views: 0,
+      contactEmail: "william.henry.harrison@example-pet-store.com",
+      contactNumber: "0712345678",
+      contactName: "John Doe",
+      lat: 0,
+      lng: 0,
+    );
+  }
+
+  LocationData? locationData;
+  List<String> locations = [];
+  List<Property> displayedSearchProperties = [];
   User? _currentUser;
   XFile? _profilePic;
+  int propertyCount = 0;
+
+  XFile? get profilePic => _profilePic;
+  List<Property> _properties = [];
+  List<Property> _likedProperties = [];
+  List<Property> _filteredProperties = [];
+
+  List<Property> get properties =>
+      _filteredProperties.isEmpty ? _properties : _filteredProperties;
+
+  List<Property> get likedProperties => _likedProperties;
 
   User? get currentUser => _currentUser;
 
-  set currentUser(User value) {
+  set currentUser(User? value) {
     _currentUser = value;
     notifyListeners();
   }
-
-  XFile? get profilePic => _profilePic;
 
   set profilePic(XFile? value) {
     _profilePic = value;
     notifyListeners();
   }
 
-  List<Property> _properties = [];
-
-  List<Property> _liked = [];
-
-  List<Property> _filteredProperties = [];
-
-  List<Property> get properties =>
-      _filteredProperties.isEmpty ? _properties : _filteredProperties;
-
-  List<Property> get likedProperties => _liked;
-
-  Future<void> fetchProperties() async {
-    _properties = await getProperties();
+  Future<void> getProperties() async {
+    log("fetching properties");
+    _properties = await NetworkLayer.getProperties();
+    sortProperties(SortOptions.rating);
+    fetchPopular();
     notifyListeners();
   }
 
-  Future<void> fetchLikedProperties() async {
-    _liked = await queryProperties("${Queries.liked.name}=true");
+  void sortProperties(SortOptions sortOption) {
+    switch (sortOption) {
+      case SortOptions.priceLow:
+        _properties.sort(
+          (a, b) => a.price.convertPriceToInt().compareTo(
+            b.price.convertPriceToInt(),
+          ),
+        );
+        notifyListeners();
+        break;
+      case SortOptions.priceHigh:
+        _properties.sort(
+          (a, b) => b.price.convertPriceToInt().compareTo(
+            a.price.convertPriceToInt(),
+          ),
+        );
+        notifyListeners();
+        break;
+      case SortOptions.rating:
+        _properties.sort((a, b) => b.rating.compareTo(a.rating));
+        notifyListeners();
+    }
+  }
+
+  Future<User?> getUserViaEmail(String email) {
+    return NetworkLayer.getUserByEmail(email);
+  }
+
+  Future<void> getCount() async {
+    propertyCount = await NetworkLayer.getCount();
     notifyListeners();
   }
 
-  Future<void> updateProperties(Property property) async {
-    await updateProperty(property);
+  void fetchPopular() {
+    List<String> popularLocations = const [
+      "Westlands",
+      "Embakasi",
+      "Donholm",
+      "Kinoo",
+      "Kikuyu",
+    ];
+    displayedSearchProperties = _properties.where((place) {
+      return popularLocations.any(
+        (popular) =>
+            place.location.toLowerCase().contains(popular.toLowerCase()),
+      );
+    }).toList();
+    log("displayedSearchProperties ${displayedSearchProperties.length}");
+  }
+
+  Future<void> fetchAccount({
+    required String userId,
+  }) async {
+    _currentUser = await NetworkLayer.fetchAccount(userId);
+    notifyListeners();
+  }
+
+  Future<void> search(String query) async {
+    log("fetching properties");
+    displayedSearchProperties = await NetworkLayer.searchProperties(query);
+    notifyListeners();
+  }
+
+  Future<void> fetchSavedProperties() async {
+    _likedProperties = await NetworkLayer.queryProperties(
+      NetworkLayer.savedPropertyQuery,
+    );
+    notifyListeners();
+  }
+
+  Future<User?> updateUser(User user) async {
+    return await NetworkLayer.updateUser(
+      user,
+    );
+  }
+
+  Future<void> validateView({
+    required String userId,
+    required String propertyId,
+  }) async {
+    await NetworkLayer.validateView(
+      userId: userId,
+      propertyId: propertyId,
+    );
+    notifyListeners();
+  }
+
+  Future<Property?> updateProperty(Property property) async {
+    return await NetworkLayer.updateProperty(property);
   }
 
   void filterProperties(bool Function(Property) test) {
     _filteredProperties = _properties
         .where((property) => test(property))
         .toList();
+    log("${_filteredProperties.length}");
     notifyListeners();
   }
 
-  Future<void> addProperties(Property property) async {
-    await createProperty(property);
-    await fetchProperties();
+  Future<void> createProperty() async {
+    await NetworkLayer.createProperty(uploadProperty);
+    await getProperties();
     notifyListeners();
   }
 
@@ -73,16 +219,16 @@ class PropertiesViewModel extends ChangeNotifier {
 class Property {
   List<String> imageUrls;
   bool liked;
-  String? id;
+  String id;
+  int views;
+  double lat, lng, rating;
   String title,
       location,
       price,
-      rating,
       bedrooms,
       bathrooms,
       area,
       type,
-      views,
       description,
       contactName,
       contactNumber,
@@ -90,7 +236,7 @@ class Property {
   List<String> features;
 
   Property({
-    this.id,
+    this.id = "",
     required this.contactEmail,
     required this.contactNumber,
     required this.contactName,
@@ -106,6 +252,8 @@ class Property {
     required this.area,
     required this.type,
     required this.views,
+    required this.lat,
+    required this.lng,
     this.description =
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
   });
@@ -119,6 +267,8 @@ class Property {
     "liked": liked,
     "title": title,
     "location": location,
+    "lat": lat,
+    "lng": lng,
     "price": price,
     "rating": rating,
     "bedrooms": bedrooms,
@@ -139,6 +289,8 @@ class Property {
     liked: json["liked"],
     title: json["title"],
     location: json["location"],
+    lat: json["lat"],
+    lng: json["lng"],
     price: json["price"],
     rating: json["rating"],
     bedrooms: json["bedrooms"],
@@ -156,18 +308,22 @@ class Property {
     String? title,
     String? location,
     String? price,
-    String? rating,
+    double? rating,
     String? bedrooms,
     String? bathrooms,
     String? area,
     String? type,
-    String? views,
+    int? views,
     String? description,
     String? contactName,
     String? contactNumber,
     String? contactEmail,
+    double? lng,
+    double? lat,
     List<String>? features,
   }) => Property(
+    lng: lng ?? this.lng,
+    lat: lat ?? this.lat,
     imageUrls: imageUrls ?? this.imageUrls,
     liked: liked ?? this.liked,
     id: id ?? this.id,
@@ -185,60 +341,6 @@ class Property {
     contactNumber: contactNumber ?? this.contactNumber,
     contactEmail: contactEmail ?? this.contactEmail,
     features: features ?? this.features,
-  );
-}
-
-class User {
-  String firstName, lastName, email, phoneNumber, password;
-  String? profilePicUrl;
-  List<String>? likedProperties;
-
-  User({
-    required this.firstName,
-    required this.lastName,
-    required this.email,
-    required this.phoneNumber,
-    required this.password,
-    this.profilePicUrl,
-    this.likedProperties,
-  });
-
-  Map<String, dynamic> toJson() => {
-    "firstName": firstName,
-    "lastName": lastName,
-    "email": email,
-    "phoneNumber": phoneNumber,
-    "password": password,
-    "profilePicUrl": profilePicUrl,
-    "likedProperties": likedProperties,
-  };
-
-  static User fromJson(Map<String, dynamic> json) => User(
-    firstName: json["firstName"],
-    lastName: json["lastName"],
-    email: json["email"],
-    phoneNumber: json["phoneNumber"],
-    password: json["password"],
-    profilePicUrl: json["profilePicUrl"],
-    likedProperties: json["likedProperties"],
-  );
-
-  User copyWith({
-    String? firstName,
-    String? lastName,
-    String? email,
-    String? phoneNumber,
-    String? password,
-    String? profilePicUrl,
-    List<String>? likedProperties,
-  }) => User(
-    firstName: firstName ?? this.firstName,
-    lastName: lastName ?? this.lastName,
-    email: email ?? this.email,
-    phoneNumber: phoneNumber ?? this.phoneNumber,
-    password: password ?? this.password,
-    profilePicUrl: profilePicUrl ?? this.profilePicUrl,
-    likedProperties: likedProperties ?? this.likedProperties,
   );
 }
 
@@ -272,6 +374,84 @@ class Feature {
     "gatedCommunity": gatedCommunity,
     "spacious": spacious,
   };
+}
+
+class User {
+  String firstName, lastName, email, phoneNumber, password, id;
+  String? profilePicUrl;
+  double? reviews;
+  int? saved;
+  int? listed;
+  int? views;
+  List<String>? likedProperties;
+
+  User({
+    this.views,
+    this.reviews,
+    this.saved,
+    this.listed,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.phoneNumber,
+    required this.password,
+    this.profilePicUrl,
+    this.likedProperties,
+    this.id = "",
+  });
+
+  Map<String, dynamic> toJson() => {
+    "_id": id,
+    "firstName": firstName,
+    "lastName": lastName,
+    "email": email,
+    "phoneNumber": phoneNumber,
+    "password": password,
+    "profilePicUrl": profilePicUrl,
+    "likedProperties": likedProperties,
+  };
+
+  static User fromJson(Map<String, dynamic> json) => User(
+    id: json["_id"],
+    firstName: json["firstName"],
+    lastName: json["lastName"],
+    email: json["email"],
+    phoneNumber: json["phoneNumber"],
+    password: json["password"],
+    profilePicUrl: json["profilePicUrl"],
+    likedProperties: List<String>.from(json["likedProperties"]),
+  );
+
+  User copyWith({
+    String? id,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phoneNumber,
+    String? password,
+    String? profilePicUrl,
+    List<String>? likedProperties,
+  }) => User(
+    id: id ?? this.id,
+    firstName: firstName ?? this.firstName,
+    lastName: lastName ?? this.lastName,
+    email: email ?? this.email,
+    phoneNumber: phoneNumber ?? this.phoneNumber,
+    password: password ?? this.password,
+    profilePicUrl: profilePicUrl ?? this.profilePicUrl,
+    likedProperties: likedProperties ?? this.likedProperties,
+  );
+}
+
+enum SortOptions {
+  priceLow("Price low"),
+  priceHigh("Price high"),
+  rating("Rating");
+  // newest("Newest first");
+
+  final String option;
+
+  const SortOptions(this.option);
 }
 
 enum PropertyType {

@@ -16,6 +16,7 @@ bool _showErrorText = false;
 class _UploadPhotosState extends State<UploadPhotos> {
   @override
   build(BuildContext context) {
+    PropertiesViewModel viewmodel = Provider.of<PropertiesViewModel>(context);
     setState(() {
       pageNumber = 3;
     });
@@ -34,7 +35,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
             ),
             textAlign: TextAlign.center,
           ),
-          Icon(imageMissing, size: context.screenWidth * 0.4),
+          Icon(imageMissingIcon, size: context.screenWidth * 0.4),
         ],
       ),
     );
@@ -45,22 +46,22 @@ class _UploadPhotosState extends State<UploadPhotos> {
     );
 
     Widget uploadPhotoFlow = uploadFlow(
+      context,
       children: [
         Text("Property photos", style: context.titleLarge),
         FadedText(
           padding: 0,
-          text:
-              "Add photos to showcase your property (first photo will be the main image)",
+          "Add photos to showcase your property (first photo will be the main image)",
           style: context.titleSmall,
         ),
 
         IntrinsicHeight(
           child: Row(
-            spacing: paddingValue,
+            spacing: spacingValue,
             children: [
               Expanded(
                 child: uploadPhotoCard(
-                  content: [Icon(camera), Text("Take photo")],
+                  content: [Icon(cameraIcon), Text("Take photo")],
                   onTap: () async {
                     requestCameraPermission(
                       isGranted: () async {
@@ -78,7 +79,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
               Expanded(
                 child: uploadPhotoCard(
                   content: [
-                    Icon(gallery),
+                    Icon(galleryIcon),
                     Text("Choose from gallery", textAlign: TextAlign.center),
                   ],
                   onTap: () {
@@ -99,7 +100,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
           ),
         ),
 
-        VerticalSpacer(height: paddingValue * 2),
+        VerticalSpacer(height: spacingValue * 2),
 
         imageFiles.isEmpty ? imageMissingWidget : imageHeader,
 
@@ -144,6 +145,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
                         _isPhotosUploading = false;
                       });
                     },
+                    viewmodel: viewmodel,
                   );
                 } else {
                   setState(() {
@@ -153,7 +155,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
               },
               children: [
                 Text("Next", style: context.bodyMedium),
-                Icon(arrowFoward),
+                Icon(arrowFowardIcon),
               ],
             ),
           ),
@@ -161,11 +163,13 @@ class _UploadPhotosState extends State<UploadPhotos> {
       ),
     );
 
-    return Stack(
-      children: [
-        uploadPhotoFlow,
-        _isPhotosUploading ? loadingIcon : Container(),
-      ],
+    return Scaffold(
+      body: Stack(
+        children: [
+          uploadPhotoFlow,
+          _isPhotosUploading ? loadingIcon : Container(),
+        ],
+      ),
     );
   }
 }
@@ -174,7 +178,7 @@ Widget uploadPhotoCard({
   required List<Widget> content,
   void Function()? onTap,
 }) {
-  return roundedCard(
+  return clickableCard(
     child: SpacedColumn(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -199,12 +203,10 @@ Widget imageGrid({
         child: Container(
           decoration: BoxDecoration(
             color: Colors.black54,
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: BorderRadius.circular(radiusValue),
           ),
-          width: double.infinity,
-          height: getImageHeight(context.screenWidth, context.screenHeight),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: BorderRadius.circular(radiusValue),
             child: Stack(
               children: [
                 Image.file(
@@ -241,9 +243,11 @@ Widget imageGrid({
 Future<void> navigateToContactInfo({
   required Function() onStart,
   required Function() onEnd,
+  required PropertiesViewModel viewmodel,
 }) async {
   onStart();
-  bufferPropertyObject.imageUrls = (await uploadImageToCloudinary(imageFiles))!;
+  viewmodel.uploadProperty.imageUrls =
+      (await NetworkLayer.uploadImageToCloudinary(imageFiles))!;
   onEnd();
 
   navigate(path: contactInfoPath);

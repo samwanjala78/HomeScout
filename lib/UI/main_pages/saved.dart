@@ -1,4 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:real_estate/UI/ui.dart';
 import 'package:real_estate/constants/ui_constants.dart';
@@ -26,29 +27,51 @@ class _SavedPageState extends State<SavedPage> {
     );
 
     mappedCard(Property property) {
-      return mainCard(
+      return homeCard(
+        viewmodel: viewModel,
         property: property,
         onTap: () {
           navigate(
             path: detailPath,
-            index: viewModel.likedProperties.indexOf(property),
+            extra: viewModel.likedProperties.indexOf(property),
           );
         },
         context: context,
-        onLiked: () {
-          Property updated = property.copyWith(liked: !property.liked);
-          viewModel.updateProperties(updated);
-        },
+        iconButton: IconButton(
+          onPressed: () async {
+            Property updated = property.copyWith(liked: false);
+            Property? newProperty = await viewModel.updateProperty(updated);
+            if (newProperty != null) {
+              setState(() {
+                viewModel.likedProperties.remove(property);
+              });
+            }
+          },
+          icon: Icon(cancelIcon, color: Colors.red),
+        ),
       );
     }
 
     return viewModel.likedProperties.isEmpty
         ? noSavedProperties
-        : spacedVerticalListView(
-            viewModel.likedProperties
+        : RefreshSpacedVerticalListView(
+            key: ValueKey(viewModel.likedProperties.length),
+            listItems: viewModel.likedProperties
                 .map((property) => mappedCard(property))
                 .toList(),
-            onRefresh: () => viewModel.fetchLikedProperties(),
+            onRefresh: () => viewModel.fetchSavedProperties(),
           );
   }
+}
+
+Future<void> navigateToSavedPage(BuildContext context) async {
+  if(context.mounted) {
+    context.pushReplacement(savedPath);
+  }
+
+  // PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(
+  //   context,
+  //   listen: false,
+  // );
+  // await viewModel.fetchSavedProperties();
 }

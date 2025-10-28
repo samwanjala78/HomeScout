@@ -30,22 +30,3 @@ List<bool> isFeatureSelected = List.generate(
   Feature.values.length,
   (_) => false,
 );
-
-Property bufferPropertyObject = Property(
-  id: null,
-  features: [],
-  imageUrls: [],
-  liked: false,
-  title: "Spacious house",
-  location: "Westlands",
-  price: "Ksh. 20,000",
-  rating: "0",
-  bedrooms: "5",
-  bathrooms: "5",
-  area: "area",
-  type: PropertyType.forRent.type,
-  views: "0",
-  contactEmail: "william.henry.harrison@example-pet-store.com",
-  contactNumber: "0712345678",
-  contactName: "John Doe",
-);

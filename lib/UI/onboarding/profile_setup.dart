@@ -2,8 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:real_estate/UI/ui.dart';
 import 'package:real_estate/constants/ui_constants.dart';
@@ -26,26 +25,25 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   Widget build(BuildContext context) {
     log("message");
     PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(context);
-    Widget picture = ClipOval(
+    Widget picture = ClipRRect(
+      borderRadius: BorderRadius.circular(999),
       child: Image.file(
         File(viewModel.profilePic?.path ?? ""),
         fit: fit,
         errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.error);
+          return Icon(Icons.person_outline_rounded);
         },
       ),
     );
 
     Widget profilePic = Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade500,
+        color: context.backgroundColor,
         shape: BoxShape.circle,
       ),
-      width: context.screenWidth / 4,
-      height: context.screenWidth / 4,
-      child: viewModel.profilePic != null
-          ? picture
-          : Icon(Icons.person_outline_rounded),
+      width: 160,
+      height: 160,
+      child: picture,
     );
 
     Widget contents = SingleChildScrollView(
@@ -60,60 +58,43 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             textAlign: TextAlign.center,
           ),
           FadedText(
-            text:
-                "Help others recognize you by adding a profile picture. You can always change this later.",
+            "Help others recognize you by adding a profile picture. You can always change this later.",
             style: context.titleSmall,
             textAlign: TextAlign.center,
           ),
           VerticalSpacer(),
-          customButton(
-            children: [Icon(camera), Text("Take Photo")],
-            onPressed: () {
-              requestCameraPermission(
-                isGranted: () async {
-                  viewModel.profilePic = await pickImageFromCamera();
-                },
-              );
-            },
-            mainAxisSize: MainAxisSize.max,
-            innerPadding: paddingValue,
+          SizedBox(
+            width: context.getMaxWidth,
+            child: customButton(
+              children: [Icon(cameraIcon), Text("Take Photo")],
+              onPressed: () {
+                requestCameraPermission(
+                  isGranted: () async {
+                    viewModel.profilePic = await pickImageFromCamera();
+                  },
+                );
+              },
+              mainAxisSize: MainAxisSize.max,
+              innerPadding: paddingValue,
+            ),
           ),
-          customButton(
-            children: [Icon(gallery), Text("Choose from gallery")],
-            onPressed: () {
-              requestCameraPermission(
-                isGranted: () async {
-                  viewModel.profilePic = await pickImageFromGallery();
-                },
-              );
-            },
-            mainAxisSize: MainAxisSize.max,
-            innerPadding: paddingValue,
+          SizedBox(
+            width: context.getMaxWidth,
+            child: customButton(
+              children: [Icon(galleryIcon), Text("Choose from gallery")],
+              onPressed: () {
+                requestCameraPermission(
+                  isGranted: () async {
+                    viewModel.profilePic = await pickImageFromGallery();
+                  },
+                );
+              },
+              mainAxisSize: MainAxisSize.max,
+              innerPadding: paddingValue,
+            ),
           ),
         ],
       ),
-    );
-
-    Widget header = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text("Set profile picture", style: context.titleLarge),
-        customButton(
-          children: [Text("Skip")],
-          onPressed: () async {
-            viewModel.currentUser?.profilePicUrl = null;
-            if (viewModel.currentUser != null) {
-              setState(() {
-                _isProfileUploading = true;
-              });
-              viewModel.currentUser = await signUp(viewModel.currentUser!);
-              setState(() {
-                _isProfileUploading = false;
-              });
-            }
-          },
-        ),
-      ],
     );
 
     Widget bottomWidget = customButton(
@@ -124,43 +105,51 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           setState(() {
             _isProfileUploading = true;
           });
-          List<String>? profPicUrl = await uploadImageToCloudinary([
-            File(profilePic.path),
-          ]);
+          List<String>? profPicUrl = await NetworkLayer.uploadImageToCloudinary(
+            [File(profilePic.path)],
+          );
           if (profPicUrl != null) {
             viewModel.currentUser?.profilePicUrl = profPicUrl[0];
           }
           if (viewModel.currentUser != null) {
-            viewModel.currentUser = await signUp(viewModel.currentUser!);
+            viewModel.currentUser = await NetworkLayer.updateUser(
+              viewModel.currentUser!,
+            );
           }
           setState(() {
             _isProfileUploading = false;
           });
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            navigate(path: homePath);
-          });
+          if (viewModel.currentUser != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              context.go(homePath);
+            });
+          } else {
+            toast("Something went wrong");
+          }
         } else {
-          Fluttertoast.showToast(
-            msg: "Error uploading image!",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0,
-          );
+          toast("set profile photo");
         }
       },
-      children: [Text("Continue"), Icon(arrowFoward)],
+      children: [Text("Continue"), Icon(arrowFowardIcon)],
+    );
+
+    Widget skipButton = customButton(
+      children: [Text("Skip")],
+      onPressed: () async {
+        context.go(homePath);
+      },
     );
 
     return Scaffold(
+      appBar: AppBar(title: Text("Set profile picture"), actions: [skipButton]),
+      persistentFooterAlignment: AlignmentDirectional.bottomEnd,
+      persistentFooterButtons: [bottomWidget],
       body: SafeArea(
         child: Padding(
           padding: paddingValueAll,
           child: Stack(
             children: [
-              Column(children: [header, VerticalSpacer(), contents]),
-              bottomWidget,
+              contents,
               _isProfileUploading ? loadingIcon : Container(),
             ],
           ),

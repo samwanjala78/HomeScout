@@ -19,24 +19,23 @@ class _UploadPageState extends State<UploadPage> {
 
   @override
   Widget build(BuildContext context) {
-    PreferredSizeWidget appbar = AppBar(
+    PreferredSizeWidget appbar = blurredAppBar(
       centerTitle: true,
       title: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text("List your property"),
-          FadedText(text: "Step $pageNumber of 4", style: context.bodyMedium),
+          FadedText("Step $pageNumber of 4", style: context.bodyMedium),
         ],
       ),
-      backgroundColor:
-          (context.brightness == Brightness.dark ? Colors.black : Colors.white)
-              .withValues(alpha: 0.4),
     );
 
-    return Scaffold(
-      appBar: appbar,
-      extendBodyBehindAppBar: true,
-      body: widget.body,
+    return SafeArea(
+      child: Scaffold(
+        appBar: appbar,
+        extendBodyBehindAppBar: true,
+        body: widget.body,
+      ),
     );
   }
 }

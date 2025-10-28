@@ -8,9 +8,9 @@ class PropertyFeatures extends StatefulWidget {
 }
 
 class _PropertyFeaturesState extends State<PropertyFeatures> {
-
   @override
   Widget build(BuildContext context) {
+    PropertiesViewModel viewmodel = Provider.of<PropertiesViewModel>(context);
     isFeatureSelected[1] = true;
     isFeatureSelected[2] = true;
     isFeatureSelected[4] = true;
@@ -18,66 +18,70 @@ class _PropertyFeaturesState extends State<PropertyFeatures> {
     setState(() {
       pageNumber = 2;
     });
-    return uploadFlow(
-      children: [
-        Text(
-          "Property features",
-          style: context.titleLarge,
-          textAlign: TextAlign.start,
-        ),
-        FadedText(
-          text: "Select features that apply to your property",
-          style: context.titleSmall,
-          textAlign: TextAlign.start,
-        ),
-        uploadFeaturesGrid(
-          features: Feature.values,
-          onTap: (index) {
-            setState(() {
-              isFeatureSelected[index] = !isFeatureSelected[index];
-            });
-          },
-          contex: context
-        ),
-      ],
-      bottomWidget: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+    return Scaffold(
+      body: uploadFlow(
+        context,
         children: [
-          Expanded(
-            child: customButton(
-              onPressed: () {
-                globalBuildContext?.pop();
-              },
-              children: [
-                Icon(arrowBack),
-                Text("Previous", style: context.bodyMedium),
-              ],
-              alignment: Alignment.bottomLeft,
-            ),
+          Text(
+            "Property features",
+            style: context.titleLarge,
+            textAlign: TextAlign.start,
           ),
-          Expanded(
-            child: customButton(
-              onPressed: () {
-                _navigateToUploadPhotos();
-              },
-              children: [
-                Text("Next", style: context.bodyMedium),
-                Icon(arrowFoward),
-              ],
-            ),
+          FadedText(
+            "Select features that apply to your property",
+            style: context.titleSmall,
+            textAlign: TextAlign.start,
+          ),
+          uploadFeaturesGrid(
+            features: Feature.values,
+            onTap: (index) {
+              setState(() {
+                isFeatureSelected[index] = !isFeatureSelected[index];
+              });
+            },
+            context: context,
           ),
         ],
+        bottomWidget: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: customButton(
+                onPressed: () {
+                  globalBuildContext?.pop();
+                },
+                children: [
+                  Icon(arrowBack),
+                  Text("Previous", style: context.bodyMedium),
+                ],
+                alignment: Alignment.bottomLeft,
+              ),
+            ),
+            Expanded(
+              child: customButton(
+                onPressed: () {
+                  _navigateToUploadPhotos(viewmodel);
+                },
+                children: [
+                  Text("Next", style: context.bodyMedium),
+                  Icon(arrowFowardIcon),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-void _navigateToUploadPhotos() {
+void _navigateToUploadPhotos(PropertiesViewModel viewmodel) {
   List<String> selectedFeatures = Feature.values.keys
       .whereIndexed((index, _) => isFeatureSelected[index] == true)
       .toList();
 
-  bufferPropertyObject.features = selectedFeatures;
+  viewmodel.uploadProperty.features = selectedFeatures;
 
   navigate(path: uploadPhotosPath);
 }
@@ -85,35 +89,41 @@ void _navigateToUploadPhotos() {
 Widget uploadFeaturesGrid({
   required Map<String, Feature> features,
   required void Function(int index) onTap,
-  required BuildContext contex
+  required BuildContext context,
 }) {
-  return GridView.count(
-    crossAxisCount: 2,
-    childAspectRatio: 2.5,
-    shrinkWrap: true,
-    physics: NeverScrollableScrollPhysics(),
-    children: List.generate(features.length, (index) {
-      Feature feature = features.values.elementAt(index);
-      return roundedCard(
-        child: SpacedRow(
-          padding: EdgeInsets.symmetric(horizontal: paddingValue / 2),
-          children: [
-            feature.icon is String ? loadSVG(feature.icon, context: contex) : Icon(feature.icon),
-            Expanded(
-              child: Text(
-                feature.label,
-                softWrap: true,
-                overflow: TextOverflow.fade,
-                maxLines: 2,
+  return SizedBox(
+    width: context.getMaxWidth,
+    child: Wrap(
+      spacing: spacingValue,
+      runSpacing: spacingValue,
+      children: List.generate(features.length, (index) {
+        Feature feature = features.values.elementAt(index);
+        return SizedBox(
+          width: (context.getMaxWidth - spacingValue - paddingValue * 2) / 2,
+          child: IntrinsicHeight(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(radiusValue),
               ),
+              leading: feature.icon is String
+                  ? loadSVG(feature.icon, context: context)
+                  : Icon(feature.icon),
+              title: Text(
+                feature.label,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              tileColor: isFeatureSelected[index]
+                  ? Colors.blue.withValues(alpha: context.alpha)
+                  : context.backgroundColor,
+              titleTextStyle: context.bodyMedium,
+              onTap: () {
+                onTap(index);
+              },
             ),
-            isFeatureSelected[index] ? Icon(done) : Container(),
-          ],
-        ),
-        onTap: () {
-          onTap(index);
-        },
-      );
-    }),
+          ),
+        );
+      }),
+    ),
   );
 }

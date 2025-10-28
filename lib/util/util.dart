@@ -1,12 +1,19 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:location/location.dart';
+import 'package:permission_handler/permission_handler.dart'
+    hide PermissionStatus;
 import 'package:real_estate/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/ui_constants.dart';
 import 'dart:io';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -14,6 +21,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+
+final storage = FlutterSecureStorage();
 
 Future<List<XFile?>> compressImage(List<File> files) async {
   List<XFile?> results = [];
@@ -95,7 +104,7 @@ SvgPicture loadSVG(
           height: height ?? context.getBottomIconSize,
           colorFilter: ColorFilter.mode(
             color ??
-                (context.brightness == Brightness.dark
+                (context.getBrightness == Brightness.dark
                     ? Colors.white
                     : Colors.black),
             BlendMode.srcIn,
@@ -108,8 +117,8 @@ SvgPicture loadSVG(
         );
 }
 
-void navigate({required String path, int? index}) {
-  globalBuildContext?.push(path, extra: index);
+void navigate({required String path, dynamic extra}) {
+  globalBuildContext?.push(path, extra: extra);
 }
 
 final ImagePicker _picker = ImagePicker();
@@ -181,4 +190,68 @@ Future<File> copyAssetToFile(String assetPath, String filename) async {
   );
 
   return file;
+}
+
+Future<bool> isTokenValid() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt_token');
+  if (token == null) return false;
+  return true;
+
+  // return await validateToken(token, onError: onError);
+
+  // if (JwtDecoder.isExpired(token)) return false;
+
+  // final resp = await http.get(Uri.parse('https://api.example.com/verify'),
+  //     headers: {'Authorization': 'Bearer $token'});
+  // return resp.statusCode == 200;
+}
+
+Future<LocationData?> getCurrentLocation() async {
+  Location location = Location();
+
+  bool serviceEnabled = await location.serviceEnabled();
+  if (!serviceEnabled) {
+    serviceEnabled = await location.requestService();
+    if (!serviceEnabled) {
+      log("User refused to enable location.");
+      return null;
+    }
+  }
+
+  PermissionStatus permissionGranted = await location.hasPermission();
+  if (permissionGranted == PermissionStatus.denied) {
+    permissionGranted = await location.requestPermission();
+    if (permissionGranted != PermissionStatus.granted) {
+      log("User denied location permission.");
+      return null;
+    }
+  }
+
+  LocationData currentLocation = await location.getLocation();
+  return currentLocation;
+}
+
+Future<void> openMapAtMarker(double lat, double lng, {String? label}) async {
+  final encodedLabel = Uri.encodeComponent(label ?? 'Location');
+
+  if (Platform.isIOS) {
+    final appleUrl = Uri.parse(
+      'https://maps.apple.com/?q=$encodedLabel&ll=$lat,$lng',
+    );
+    await launchUrl(appleUrl, mode: LaunchMode.externalApplication);
+  } else {
+    final googleUrl = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
+    await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
+  }
+}
+
+extension CurrencyParsing on String {
+  int convertPriceToInt() {
+    String numericString = replaceAll(RegExp('[^0-9]'), '');
+
+    return int.parse(numericString);
+  }
 }

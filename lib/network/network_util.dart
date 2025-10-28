@@ -1,140 +1,335 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
+import 'package:retry/retry.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../UI/ui.dart';
 import '../data/viewmodel.dart';
 import '../util/util.dart';
 
-const String _baseUrl = "http://192.168.100.4:3000/properties";
-const String _signUpUrl = "http://192.168.100.4:3000/register";
-const String _signInUrl = "http://192.168.100.4:3000/login";
-
-Future<List<String>?> uploadImageToCloudinary(List<File> imageFiles) async {
-  List<String> urls = [];
-
-  List<XFile?> compressedImage = await compressImage(imageFiles);
-
-  for (var imageFile in compressedImage) {
-    final request = http.MultipartRequest(
-      "POST",
-      Uri.parse("http://192.168.100.4:3000/upload"),
-    );
-
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        "image",
-        imageFile!.path,
-        filename: basename(imageFile.path),
-      ),
-    );
-
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      log("message");
-      final responseData = await http.Response.fromStream(response);
-      final data = jsonDecode(responseData.body);
-      log(responseData.body);
-      final url = data['url'];
-      urls.add(url);
-    } else {
-      Fluttertoast.showToast(
-        msg: "Error uploading image(s)!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-
-      return null;
-    }
-  }
-
-  return urls;
-}
-
-Future<Property?> createProperty(Property property) async {
-  final response = await http.post(
-    Uri.parse(_baseUrl),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode(property.toJson()),
-  );
-
-  if (response.statusCode == 201) {
-    return Property.fromJson(jsonDecode(response.body));
-  }
-  log("Create failed: ${response.body}");
-  return null;
-}
-
-Future<List<Property>> getProperties() async {
-  try {
-    final response = await http.get(Uri.parse(_baseUrl));
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.map((property) => Property.fromJson(property)).toList();
-    }
-    throw Exception("Failed to load properties");
-  } on SocketException {
-    return [];
-  } catch (e) {
-    return [];
-  }
-}
-
-Future<List<Property>> queryProperties(String queries) async {
-  final response = await http.get(Uri.parse("$_baseUrl?$queries"));
-  if (response.statusCode == 200) {
-    final List data = jsonDecode(response.body);
-    return data.map((property) => Property.fromJson(property)).toList();
-  }
-  throw Exception("Failed to load properties");
-}
-
-Future<Property?> updateProperty(Property property) async {
-  final response = await http.put(
-    Uri.parse("$_baseUrl/${property.id}"),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode(property.toJson()),
-  );
-
-  if (response.statusCode == 200) {
-    return Property.fromJson(jsonDecode(response.body));
-  }
-  log("Update failed: ${response.body}");
-
-  return null;
-}
-
-Future<bool> deleteProperty(String id) async {
-  final response = await http.delete(Uri.parse("$_baseUrl/$id"));
-  return response.statusCode == 204;
-}
-
 enum Queries { liked, location, title }
 
-Future<User> signUp(User user) async {
-  final response = await http.post(
-    Uri.parse(_signUpUrl),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode(user.toJson()),
+enum Method { get, post, put, delete }
+
+class _NetworkLayer {
+  final String _basePropertiesUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/properties";
+  final String _searchProperties =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/search?q=";
+  final String _registerUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/register";
+  final String _loginUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/login";
+  final String _userUrl = "https://porky-reagan-pouncingly.ngrok-free.dev/user";
+  final String _validateTokenUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/validate";
+  final String _viewsUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/views";
+  final String _accountLookUpUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/userAcc";
+  final String _countUrl =
+      "https://porky-reagan-pouncingly.ngrok-free.dev/properties/count";
+
+  final String savedPropertyQuery = "${Queries.liked.name}=true";
+
+  final _client = http.Client();
+  final _retryOptions = const RetryOptions(
+    maxAttempts: 3,
+    delayFactor: Duration(seconds: 2),
   );
 
-  return User.fromJson(jsonDecode(response.body));
+  Future<dynamic> request(
+    String url, {
+    required Method method,
+    Map<String, String> headers = const {'Content-Type': 'application/json'},
+    Map<String, dynamic>? body,
+  }) async {
+    try {
+      final response = await _retryOptions.retry(() async {
+        late http.Response res;
+
+        final uri = Uri.parse(url);
+
+        switch (method) {
+          case Method.post:
+            res = await _client
+                .post(uri, headers: headers, body: jsonEncode(body))
+                .timeout(const Duration(seconds: 10));
+            break;
+          case Method.put:
+            res = await _client
+                .put(uri, headers: headers, body: jsonEncode(body))
+                .timeout(const Duration(seconds: 10));
+            break;
+          case Method.delete:
+            res = await _client
+                .delete(uri, headers: headers)
+                .timeout(const Duration(seconds: 10));
+            break;
+          default:
+            res = await _client
+                .get(uri, headers: headers)
+                .timeout(const Duration(seconds: 10));
+        }
+
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          return res;
+        } else {
+          throw HttpException('Bad status code: ${res.statusCode}');
+        }
+      });
+
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
+    } on SocketException {
+      log('No internet connection.');
+      return {'error': 'No internet connection'};
+    } on TimeoutException {
+      log('Request timed out.');
+      return {'error': 'Request timed out'};
+    } on HttpException catch (e) {
+      log('Server error: $e');
+      return {'error': e.message};
+    } catch (e) {
+      log('Unexpected error: $e');
+      return {'error': e.toString()};
+    }
+  }
+
+  Future<List<String>?> uploadImageToCloudinary(List<File> imageFiles) async {
+    List<String> urls = [];
+
+    List<XFile?> compressedImage = await compressImage(imageFiles);
+
+    for (var imageFile in compressedImage) {
+      final request = http.MultipartRequest(
+        "POST",
+        Uri.parse("https://porky-reagan-pouncingly.ngrok-free.dev/upload"),
+      );
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          "image",
+          imageFile!.path,
+          filename: basename(imageFile.path),
+        ),
+      );
+
+      http.StreamedResponse? response;
+
+      try {
+        response = await _retryOptions.retry(
+          () async => await request.send(),
+          retryIf: (e) =>
+              e is http.ClientException ||
+              e is TimeoutException ||
+              e is SocketException,
+        );
+      } on TimeoutException catch (e) {
+        log('Request timed out: $e');
+        toast('Request timed out');
+      } on SocketException catch (e) {
+        log('Network error: $e');
+        toast('Network error');
+      } on http.ClientException catch (e) {
+        log('HTTP client error: $e');
+        toast('HTTP client error');
+      } catch (e) {
+        log('Unexpected error: $e');
+        toast('Unexpected error');
+      }
+
+      if (response?.statusCode == 200) {
+        final responseData = await http.Response.fromStream(response!);
+        final data = jsonDecode(responseData.body);
+        log(responseData.body);
+        final url = data['url'];
+        urls.add(url);
+      }
+
+      log("upload image response: ${response?.statusCode}");
+    }
+
+    return urls;
+  }
+
+  Future<Property?> createProperty(Property property) async {
+    final body = await request(
+      _basePropertiesUrl,
+      body: property.toJson(),
+      method: Method.post,
+    );
+
+    return Property.fromJson(body);
+  }
+
+  Future<List<Property>> getProperties() async {
+    List<dynamic> body = await request(_basePropertiesUrl, method: Method.get);
+    return body.map((property) => Property.fromJson(property)).toList();
+  }
+
+  Future<int> getCount() async {
+    Map<String, dynamic> body = await request(_countUrl, method: Method.get);
+    return body["count"];
+  }
+
+  Future<List<Property>> searchProperties(String query) async {
+    List<dynamic> body = await request(
+      _searchProperties + query,
+      method: Method.get,
+    );
+    return body.map((property) => Property.fromJson(property)).toList();
+  }
+
+  Future<List<Property>> queryProperties(String queries) async {
+    List<dynamic> body = await request(
+      "$_basePropertiesUrl?$queries",
+      method: Method.get,
+    );
+    return body.map((property) => Property.fromJson(property)).toList();
+  }
+
+  Future<Property?> updateProperty(Property property) async {
+    Map<String, dynamic> body = await request(
+      "$_basePropertiesUrl/${property.id}",
+      body: property.toJson(),
+      method: Method.put,
+    );
+
+    return Property.fromJson(body);
+  }
+
+  Future<void> deleteProperty(String id) async {
+    await request("$_basePropertiesUrl/$id", method: Method.delete);
+  }
+
+  Future<User?> signUp(User user) async {
+    Map<String, dynamic> body = await request(
+      _registerUrl,
+      body: user.toJson(),
+      method: Method.post,
+    );
+
+    final String token = body["token"];
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jwt_token', token);
+
+    Map<String, dynamic> userJson = body['user'];
+
+    User responseUser = User.fromJson(userJson);
+
+    await prefs.setString("userId", responseUser.id);
+
+    return user;
+  }
+
+  Future<User?> signIn({
+    required String userEmail,
+    required String userPassword,
+  }) async {
+    Map<String, dynamic> body = await request(
+      _loginUrl,
+      body: {"email": userEmail, "password": userPassword},
+      method: Method.post,
+    );
+
+    final String token = body['token'];
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jwt_token', token);
+
+    Map<String, dynamic> userJson = body['user'];
+
+    User user = User.fromJson(userJson);
+
+    await prefs.setString("userId", user.id);
+
+    return user;
+  }
+
+  Future<User?> updateUser(User user) async {
+    Map<String, dynamic> body = await request(
+      "$_userUrl/${user.id}",
+      body: user.toJson(),
+      method: Method.put,
+    );
+
+    return User.fromJson(body);
+  }
+
+  Future<User?> getUserByEmail(String email) async {
+    Map<String, dynamic> body = await request(
+      "$_userUrl/${email.trim().toLowerCase()}",
+      method: Method.get,
+    );
+
+    return User.fromJson(body);
+  }
+
+  Future<Property?> validateView({
+    required String userId,
+    required String propertyId,
+  }) async {
+    Map<String, dynamic> body = await request(
+      _viewsUrl,
+      body: {"userId": userId, "propertyId": propertyId},
+      method: Method.post,
+    );
+
+    return Property.fromJson(body);
+  }
+
+  Future<String?> validateToken(String token) async {
+    Map<String, dynamic> body = await request(
+      _validateTokenUrl,
+      headers: {"Authorization": "Bearer $token"},
+      method: Method.get,
+    );
+
+    return body["userId"];
+  }
+
+  Future<String?> getNeighborhoodName({
+    required double lat,
+    required double lng,
+  }) async {
+    final url =
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=AIzaSyDKK4M85kgFAlesaUhxrmdRBht8IQcV_xk';
+
+    Map<String, dynamic> body = await request(url, method: Method.get);
+
+    if (body['status'] == 'OK') {
+      List results = body['results'];
+
+      for (var result in results) {
+        String locationType = result['geometry']['location_type'];
+        if (locationType == "APPROXIMATE") {
+          return result['formatted_address'];
+        }
+      }
+    }
+    return null;
+  }
+
+  Future<User?> fetchAccount(String userId) async {
+    log("userId: $userId");
+    Map<String, dynamic> body = await request(
+      _accountLookUpUrl,
+      body: {"userId": userId},
+      method: Method.post,
+    );
+
+    log("body: $body");
+
+    return User.fromJson(body["user"]);
+  }
 }
 
-Future<User> signIn(User user) async {
-  final response = await http.post(
-    Uri.parse(_signInUrl),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode(user.toJson()),
-  );
-
-  return User.fromJson(jsonDecode(response.body));
-}
+final NetworkLayer = _NetworkLayer();

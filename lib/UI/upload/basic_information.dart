@@ -8,205 +8,174 @@ class BasicInformation extends StatefulWidget {
 }
 
 class _BasicInformationPageState extends State<BasicInformation> {
-  // _BasicInformationData basicInformationData = _BasicInformationData();
-
   final _basicInfoFormKey = GlobalKey<FormState>();
+
+  final controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(context);
+
     setState(() {
       pageNumber = 1;
     });
 
-    final NumberFormat _formatter = NumberFormat.currency(
+    final NumberFormat formatter = NumberFormat.currency(
       locale: context.localeString,
       symbol: currencyFormat.currencySymbol,
       decimalDigits: 0,
     );
 
-    return Form(
-      key: _basicInfoFormKey,
-      child: uploadFlow(
-        children: [
-          Text(
-            "Basic information",
-            style: context.titleLarge,
-            textAlign: TextAlign.start,
-          ),
-          PlainTextField(
-            initialText: "Spacious house",
-            hint: Text("Property Title"),
-            onChanged: (title) {
-              // basicInformationData.titleString = title;
-            },
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Type"),
-              VerticalSpacer(height: paddingValue / 2),
-              DropdownMenu<String>(
-                initialSelection: PropertyType.forRent.type,
-                onSelected: (type) {
-                  // basicInformationData.typeString = type!;
-                },
-                menuStyle: MenuStyle(
-                  maximumSize: WidgetStateProperty.all(
-                    Size.fromWidth(double.infinity),
-                  ),
-                ),
-                hintText: "e.g., for rent",
-                textStyle: TextStyle(
-                  color: context.brightness == Brightness.dark
-                      ? Colors.black
-                      : Colors.white,
-                ),
-                inputDecorationTheme: InputDecorationTheme(
-                  filled: true,
-                  fillColor: context.brightness == Brightness.dark
-                      ? Colors.grey.shade800
-                      : Colors.grey.shade300,
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                width: double.infinity,
-                dropdownMenuEntries: [
-                  DropdownMenuEntry(
-                    value: PropertyType.forRent.type,
-                    label: PropertyType.forRent.type,
-                  ),
-                  DropdownMenuEntry(
-                    value: PropertyType.forSale.type,
-                    label: PropertyType.forSale.type,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          PlainTextField(
-            initialText: "Ksh. 20,000",
-            hint: Text("Price"),
-            onChanged: (price) {
-              // basicInformationData.priceString = price;
-            },
-            textInputType: TextInputType.number,
-            textInputFormatter: [
-              FilteringTextInputFormatter.digitsOnly,
-              CurrencyInputFormatter(_formatter),
-            ],
-          ),
-          PlainTextField(
-            initialText: "Westlands",
-            hint: Text("Location"),
-            onChanged: (location) {
-              // basicInformationData.locationString = location;
-            },
-          ),
-          PlainTextField(
-            hint: Text("Description"),
-            onChanged: (description) {
-              // basicInformationData.descriptionString = description;
-            },
-          ),
-          Row(
-            spacing: paddingValue,
-            children: [
-              Expanded(
-                child: PlainTextField(
-                  initialText: "5",
-                  hint: Text("Bedrooms"),
-                  onChanged: (bedrooms) {
-                    // basicInformationData.bedroomsString = bedrooms;
-                  },
-                  textInputType: TextInputType.number,
-                ),
-              ),
-              Expanded(
-                child: PlainTextField(
-                  initialText: "5",
-                  hint: Text("Bathrooms"),
-                  onChanged: (bathrooms) {
-                    // basicInformationData.bathroomsString = bathrooms;
-                  },
-                  textInputType: TextInputType.number,
-                ),
-              ),
-            ],
-          ),
-        ],
-        bottomWidget: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Scaffold(
+      body: Form(
+        key: _basicInfoFormKey,
+        child: uploadFlow(
+          context,
           children: [
-            Expanded(
-              child: IntrinsicWidth(
-                child: customButton(
-                  onPressed: () {
-                    globalBuildContext?.pushReplacement(homePath);
-                  },
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Icon(arrowBack),
-                    Text("Previous", style: context.bodyMedium),
-                  ],
-                ),
+            Text(
+              "Basic information",
+              style: context.titleLarge,
+              textAlign: TextAlign.start,
+            ),
+            PlainTextField(
+              hint: Text("Property title"),
+              onChanged: (title) {
+                viewModel.uploadProperty.title = title;
+              },
+            ),
+            Hero(
+              tag: "Searchbar",
+              child: PlainTextField(
+                controller: controller,
+                hint: Text("Add location"),
+                onTap: () async {
+                  await context.push<bool>(searchPath);
+
+                  controller.text = viewModel.uploadProperty.location;
+                },
               ),
             ),
-            Expanded(
-              child: IntrinsicWidth(
-                child: customButton(
-                  onPressed: () {
-                    if (_basicInfoFormKey.currentState!.validate()) {
-                      // _navigateToPropertyFeatures(
-                      //   // basicInformationData: basicInformationData,
-                      // );
-                      navigate(path: featuresPath);
-                    }
-                  },
-                  children: [
-                    Text("Next", style: context.bodyMedium),
-                    Icon(arrowFoward),
-                  ],
+            DropdownMenu<String>(
+              initialSelection: PropertyType.forRent.type,
+              onSelected: (type) {
+                viewModel.uploadProperty.type = type!;
+              },
+              menuStyle: MenuStyle(
+                maximumSize: WidgetStateProperty.all(
+                  Size.fromWidth(double.infinity),
                 ),
               ),
+              hintText: "e.g., for rent",
+              inputDecorationTheme: InputDecorationTheme(
+                filled: true,
+                fillColor: context.backgroundColor,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue, width: 1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.red, width: 1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.red, width: 1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              width: double.infinity,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: PropertyType.forRent.type,
+                  label: PropertyType.forRent.type,
+                ),
+                DropdownMenuEntry(
+                  value: PropertyType.forSale.type,
+                  label: PropertyType.forSale.type,
+                ),
+              ],
+            ),
+            PlainTextField(
+              hint: Text("Price"),
+              onChanged: (price) {
+                viewModel.uploadProperty.price = price;
+              },
+              textInputType: TextInputType.number,
+              textInputFormatter: [
+                FilteringTextInputFormatter.digitsOnly,
+                CurrencyInputFormatter(formatter),
+              ],
+            ),
+            PlainTextField(
+              hint: Text("Description"),
+              onChanged: (description) {
+                viewModel.uploadProperty.description = description;
+              },
+              validator: (description) => null,
+            ),
+            Row(
+              spacing: spacingValue,
+              children: [
+                Expanded(
+                  child: PlainTextField(
+                    hint: Text("Bedrooms"),
+                    onChanged: (bedrooms) {
+                      viewModel.uploadProperty.bedrooms = bedrooms;
+                    },
+                    textInputType: TextInputType.number,
+                  ),
+                ),
+                Expanded(
+                  child: PlainTextField(
+                    hint: Text("Bathrooms"),
+                    onChanged: (bathrooms) {
+                      viewModel.uploadProperty.bathrooms = bathrooms;
+                    },
+                    textInputType: TextInputType.number,
+                  ),
+                ),
+              ],
             ),
           ],
+          bottomWidget: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: IntrinsicWidth(
+                  child: customButton(
+                    onPressed: () {
+                      globalBuildContext?.pushReplacement(homePath);
+                    },
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      Icon(arrowBack),
+                      Text("Previous", style: context.bodyMedium),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: IntrinsicWidth(
+                  child: customButton(
+                    onPressed: () {
+                      if (_basicInfoFormKey.currentState!.validate()) {
+                        navigate(path: featuresPath);
+                      }
+                    },
+                    children: [
+                      Text("Next", style: context.bodyMedium),
+                      Icon(arrowFowardIcon),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _BasicInformationData {
-  String titleString,
-      typeString,
-      priceString,
-      locationString,
-      descriptionString,
-      bedroomsString,
-      bathroomsString;
-
-  _BasicInformationData({
-    this.titleString = "",
-    this.typeString = "",
-    this.priceString = "",
-    this.locationString = "",
-    this.descriptionString = "",
-    this.bedroomsString = "",
-    this.bathroomsString = "",
-  });
-}
-
-void _navigateToPropertyFeatures({
-  required _BasicInformationData basicInformationData,
-}) {
-  bufferPropertyObject.title = basicInformationData.titleString;
-  bufferPropertyObject.type = basicInformationData.typeString;
-  bufferPropertyObject.price = basicInformationData.priceString;
-  bufferPropertyObject.location = basicInformationData.locationString;
-  bufferPropertyObject.description = basicInformationData.descriptionString;
-  bufferPropertyObject.bedrooms = basicInformationData.bedroomsString;
-  bufferPropertyObject.bathrooms = basicInformationData.bathroomsString;
-
-  globalBuildContext?.push(featuresPath);
 }
