@@ -85,11 +85,11 @@ class _UploadPhotosState extends State<UploadPhotos> {
                   onTap: () {
                     requestCameraPermission(
                       isGranted: () async {
-                        XFile? image = await pickImageFromGallery();
+                        List<XFile> images = await pickImagesFromGallery();
                         setState(() {
-                          image != null
-                              ? imageFiles.add(File(image.path))
-                              : null;
+                          for (XFile image in images) {
+                            imageFiles.add(File(image.path));
+                          }
                         });
                       },
                     );
