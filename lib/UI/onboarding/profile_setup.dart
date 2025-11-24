@@ -66,6 +66,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           SizedBox(
             width: context.getMaxWidth,
             child: customButton(
+              context: context,
               children: [Icon(cameraIcon), Text("Take Photo")],
               onPressed: () {
                 requestCameraPermission(
@@ -81,6 +82,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           SizedBox(
             width: context.getMaxWidth,
             child: customButton(
+              context: context,
               children: [Icon(galleryIcon), Text("Choose from gallery")],
               onPressed: () {
                 requestCameraPermission(
@@ -98,6 +100,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
 
     Widget bottomWidget = customButton(
+      context: context,
       alignment: Alignment.bottomRight,
       onPressed: () async {
         final profilePic = viewModel.profilePic;
@@ -134,6 +137,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
 
     Widget skipButton = customButton(
+      context: context,
       children: [Text("Skip")],
       onPressed: () async {
         context.go(homePath);

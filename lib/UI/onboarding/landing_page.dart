@@ -46,6 +46,7 @@ class _SignInPageState extends State<SignInPage> {
     Widget signInWithGoogle = SizedBox(
       width: 300,
       child: roundedButton(
+        context: context,
         onPressed: () {
           handleSignIn(); /*todo*/
         },

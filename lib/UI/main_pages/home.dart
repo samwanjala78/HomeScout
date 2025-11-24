@@ -58,45 +58,47 @@ class _HomePageState extends State<HomePage> {
         ),
         builder: (context) => Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(10),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              VerticalSpacer(),
-              Text('Sort Properties', style: context.titleMedium),
-              const Divider(),
-              ListTile(
-                title: FadedText('Price (Low to High)'),
-                onTap: () {
-                  viewModel.sortProperties(SortOptions.priceLow);
-                  sortBy = SortOptions.priceLow.option;
-                  context.pop();
-                },
-              ),
-              ListTile(
-                title: FadedText('Price (High to Low)'),
-                onTap: () {
-                  viewModel.sortProperties(SortOptions.priceHigh);
-                  sortBy = SortOptions.priceHigh.option;
-                  context.pop();
-                },
-              ),
-              ListTile(
-                title: FadedText('Rating'),
-                onTap: () {
-                  viewModel.sortProperties(SortOptions.rating);
-                  sortBy = SortOptions.rating.option;
-                  context.pop();
-                },
-              ),
-            ],
+                VerticalSpacer(),
+                Text('Sort Properties', style: context.titleMedium),
+                const Divider(),
+                ListTile(
+                  title: FadedText('Price (Low to High)'),
+                  onTap: () {
+                    viewModel.sortProperties(SortOptions.priceLow);
+                    sortBy = SortOptions.priceLow.option;
+                    context.pop();
+                  },
+                ),
+                ListTile(
+                  title: FadedText('Price (High to Low)'),
+                  onTap: () {
+                    viewModel.sortProperties(SortOptions.priceHigh);
+                    sortBy = SortOptions.priceHigh.option;
+                    context.pop();
+                  },
+                ),
+                ListTile(
+                  title: FadedText('Rating'),
+                  onTap: () {
+                    viewModel.sortProperties(SortOptions.rating);
+                    sortBy = SortOptions.rating.option;
+                    context.pop();
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -104,85 +106,96 @@ class _HomePageState extends State<HomePage> {
 
     Widget topCard = SizedBox(
       width: context.getMaxWidth,
-      child: Column(
-        children: [
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedCard(
-                    children: [
-                      customIconContainer(
-                        borderRadius: 999,
-                        child: Icon(
-                          apartmentIcon,
-                          size: topIconHeight,
-                          color: context.highlightColor,
-                          fill: 1,
-                        ),
-                      ),
-                      Text("Rent Apartments", textAlign: TextAlign.center),
-                    ],
-                    onTap: () {
-                      isRentSelected = true;
-                      isBuySelected = false;
-                      viewModel.filterProperties(
-                        (element) => element.type == PropertyType.forSale.type,
-                      );
-                    },
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedCard(
+                children: [
+                  customContainer(
+                    padding: EdgeInsets.all(paddingValue),
+                    color: Colors.white,
+                    borderRadius: 999,
+                    child: Icon(
+                      apartmentIcon,
+                      size: topIconHeight,
+                      color: context.highlightColor,
+                      fill: 1,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: SizedCard(
-                    children: [
-                      customIconContainer(
-                        borderRadius: 999,
-                        child: Icon(
-                          homeIcon,
-                          size: topIconHeight,
-                          color: context.highlightColor,
-                          fill: 1,
-                        ),
-                      ),
-                      Text("Buy Homes", textAlign: TextAlign.center),
-                    ],
-                    onTap: () {
-                      isRentSelected = false;
-                      isBuySelected = true;
-                      viewModel.filterProperties(
-                        (element) => element.type == PropertyType.forSale.type,
-                      );
-                    },
-                  ),
-                ),
-              ],
+                  Text("Rent Apartments", textAlign: TextAlign.center),
+                ],
+                onTap: () {
+                  isRentSelected = true;
+                  isBuySelected = false;
+                  viewModel.filterProperties(
+                    (element) => element.type == PropertyType.forRent.type,
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: SizedCard(
+                children: [
+                  customContainer(
+                    padding: EdgeInsets.all(paddingValue),
+                    color: Colors.white,
+                    borderRadius: 999,
+                    child: Icon(
+                      homeIcon,
+                      size: topIconHeight,
+                      color: context.highlightColor,
+                      fill: 1,
+                    ),
+                  ),
+                  Text("Buy Homes", textAlign: TextAlign.center),
+                ],
+                onTap: () {
+                  isRentSelected = false;
+                  isBuySelected = true;
+                  viewModel.filterProperties(
+                    (element) => element.type == PropertyType.forSale.type,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
     Widget propertyListControls = Center(
+      key: ValueKey("Home controls"),
       child: SizedBox(
         width: context.getMaxWidth,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            FadedText("Featured", style: context.bodyLarge),
+            InkWell(
+              onTap: () {
+                viewModel.resetProperties();
+              },
+              child: Text("Show all"),
+            ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
+              spacing: spacingValue / 4,
               children: [
                 InkWell(
                   onTap: showSortOptions,
                   child: textIconPair(
-                    FadedText(sortBy, style: context.bodySmall),
-                    Icon(sortIcon, color: context.fadedIconColor),
+                    customContainer(
+                      padding: EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+                      color: Colors.blue.shade900,
+                      child: Text(sortBy, style: context.bodySmall),
+                    ),
+                    Icon(sortIcon),
                   ),
                 ),
                 HorizontalSpacer(width: spacingValue / 2),
-                Icon(filterIcon, color: context.fadedIconColor),
+                Icon(filterIcon),
               ],
             ),
           ],
@@ -190,10 +203,13 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    Widget imagePlaceholder = container(
-      width: context.getMaxWidth,
-      height: context.getImageHeight,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(radiusValue)),
+    Widget imagePlaceholder = placeHolderShimmer(
+      child: container(
+        width: context.getMaxWidth,
+        height: context.getImageHeight,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(radiusValue)),
+        context: context,
+      ),
       context: context,
     );
 
@@ -251,6 +267,7 @@ class _HomePageState extends State<HomePage> {
     List<Widget> placeholders = List.generate(
       viewModel.propertyCount,
       (index) => Card(
+        key: ValueKey(index),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusValue),
         ),
@@ -266,13 +283,14 @@ class _HomePageState extends State<HomePage> {
 
     for (var property in properties) {
       Widget mainCard = homeCard(
+        key: ValueKey(property.id),
         viewmodel: viewModel,
         property: property,
         onTap: () {
           navigate(path: detailPath, extra: properties.indexOf(property));
         },
         context: context,
-        iconButton: IconButton(
+        iconButton: AnimatedIconButton(
           onPressed: () async {
             Property updated = property.copyWith(liked: !property.liked);
             Property? newProperty = await viewModel.updateProperty(updated);

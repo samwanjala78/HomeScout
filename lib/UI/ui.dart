@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:implicitly_animated_list/implicitly_animated_list.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:real_estate/constants/ui_constants.dart';
 import 'package:real_estate/data/viewmodel.dart';
@@ -227,14 +228,12 @@ class RefreshSpacedVerticalListView extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final double padding;
   final List<Widget> listItems;
-  final GlobalKey<AnimatedListState>? listKey;
 
   const RefreshSpacedVerticalListView({
     super.key,
     required this.onRefresh,
     this.padding = paddingValue,
     required this.listItems,
-    this.listKey,
   });
 
   @override
@@ -250,15 +249,14 @@ class _RefreshSpacedVerticalListViewState
       padding: EdgeInsets.symmetric(horizontal: widget.padding),
       child: RefreshIndicator(
         onRefresh: widget.onRefresh,
-        child: ListView.separated(
-          key: widget.listKey,
-          itemCount: widget.listItems.length,
-          itemBuilder: (context, index) {
-            return widget.listItems[index];
+        child: ImplicitlyAnimatedList(
+          itemEquality: (a, b) {
+            return a.hashCode == b.hashCode;
           },
-          separatorBuilder: (BuildContext context, int index) {
-            return VerticalSpacer();
+          itemBuilder: (context, widget) {
+            return Column(children: [widget, VerticalSpacer()]);
           },
+          itemData: widget.listItems,
         ),
       ),
     );
@@ -356,7 +354,7 @@ class _SizedCardState extends State<SizedCard> {
   @override
   Widget build(BuildContext context) {
     return clickableCard(
-      borderRadius: 999,
+      borderRadius: 8,
       color: widget.color,
       onTap: widget.onTap,
       child: SpacedRow(
@@ -442,7 +440,10 @@ class _PlainTextFieldState extends State<PlainTextField> {
         prefixIcon: widget.prefixIcon,
         label: widget.label,
         filled: true,
-        fillColor: context.backgroundColor,
+        fillColor: blendColors(
+          context.backgroundColor,
+          context.backgroundOverlay,
+        ),
       ),
       autofillHints: widget.autofillHints,
       obscureText: widget.obscureText,
@@ -457,7 +458,7 @@ class _PlainTextFieldState extends State<PlainTextField> {
 }
 
 Widget imageContainer(
-  Property property, {
+  String url, {
   double borderRadius = radiusValue,
   double padding = paddingValue,
   required BuildContext context,
@@ -467,12 +468,12 @@ Widget imageContainer(
       color: Colors.black54,
       borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
     ),
-    width: context.getMaxWidth,
-    height: context.getImageHeight,
+    width: double.infinity,
+    height: double.infinity,
     child: ClipRRect(
       borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
       child: CachedNetworkImage(
-        imageUrl: property.imageUrls[0],
+        imageUrl: url,
         fit: fit,
         height: imageRes.width,
         width: imageRes.width,
@@ -485,9 +486,9 @@ Widget imageContainer(
   );
 }
 
-Widget propertyType(Property property) => Container(
+Widget propertyType(Property property, BuildContext context) => Container(
   decoration: BoxDecoration(
-    color: Colors.blue.shade900,
+    color: context.highlightColor,
     borderRadius: BorderRadius.circular(radiusValue / 2),
   ),
   child: Padding(
@@ -543,14 +544,12 @@ Widget ratingPair(BuildContext context, Property property) => iconTextPair(
 );
 
 Widget viewPair(BuildContext context, Property property) => iconTextPair(
-  Icon(eyeIcon, color: context.highlightColor),
-  Text(
-    property.views.toString(),
-    style: TextStyle(color: context.highlightColor),
-  ),
+  Icon(eyeIcon, color: context.fadedIconColor),
+  FadedText(property.views.toString()),
 );
 
 Widget homeCard({
+  Key? key,
   required PropertiesViewModel viewmodel,
   required Property property,
   required Function() onTap,
@@ -558,7 +557,7 @@ Widget homeCard({
   Color? color,
   required Widget iconButton,
 }) {
-  Widget propertyImage = imageContainer(property, context: context);
+  Widget propertyImage = ImagePager(imageUrls: property.imageUrls);
 
   Widget propertyTitle = Text(property.title);
 
@@ -570,19 +569,13 @@ Widget homeCard({
     spacing: spacingValue,
     children: [
       iconTextPair(
-        Icon(bedIcon, color: context.highlightColor),
-        Text(
-          property.bedrooms,
-          style: TextStyle(color: context.highlightColor),
-        ),
+        Icon(bedIcon, color: context.fadedIconColor),
+        FadedText(property.bedrooms),
       ),
 
       iconTextPair(
-        Icon(bathIcon, color: context.highlightColor),
-        Text(
-          property.bathrooms,
-          style: TextStyle(color: context.highlightColor),
-        ),
+        Icon(bathIcon, color: context.fadedIconColor),
+        FadedText(property.bathrooms),
       ),
     ],
   );
@@ -624,8 +617,8 @@ Widget homeCard({
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            propertyType(property),
-            customIconContainer(color: Colors.black54, child: iconButton),
+            propertyType(property, context),
+            customContainer(color: Colors.black54, child: iconButton),
           ],
         ),
       ),
@@ -633,6 +626,7 @@ Widget homeCard({
   );
 
   return clickableCard(
+    key: key,
     color: color,
     child: cardContents,
     onTap: () async {
@@ -663,7 +657,7 @@ Widget searchPageCard({
         ),
       ),
       width: 140,
-      height: context.getImageHeight * 0.6,
+      height: 150,
       child: ClipRRect(
         borderRadius: BorderRadius.horizontal(
           left: Radius.circular(radiusValue),
@@ -684,30 +678,18 @@ Widget searchPageCard({
 
   Widget propertyTitle = Text(property.title, overflow: TextOverflow.ellipsis);
 
-  Widget price = Text(
-    property.price,
-    style: TextStyle(
-      color: context.highlightColor,
-      overflow: TextOverflow.ellipsis,
-    ),
-  );
+  Widget price = FadedText(property.price);
 
   Widget roomsBaths = Row(
     spacing: spacingValue,
     children: [
       iconTextPair(
-        Icon(bedIcon, color: context.highlightColor),
-        Text(
-          property.bedrooms,
-          style: TextStyle(color: context.highlightColor),
-        ),
+        Icon(bedIcon, color: context.fadedIconColor),
+        FadedText(property.bedrooms),
       ),
       iconTextPair(
-        Icon(bathIcon, color: context.highlightColor),
-        Text(
-          property.bathrooms,
-          style: TextStyle(color: context.highlightColor),
-        ),
+        Icon(bathIcon, color: context.fadedIconColor),
+        FadedText(property.bathrooms),
       ),
     ],
   );
@@ -732,7 +714,7 @@ Widget searchPageCard({
         padding: paddingValueAll,
         child: Align(
           alignment: Alignment.topLeft,
-          child: propertyType(property),
+          child: propertyType(property, context),
         ),
       ),
     ],
@@ -751,18 +733,18 @@ Widget searchPageCard({
   );
 }
 
-Widget customIconContainer({
+Widget customContainer({
   required Widget child,
-  Color color = Colors.white,
-  double borderRadius = radiusValue,
-  double padding = paddingValue,
+  Color color = Colors.black54,
+  double borderRadius = 999,
+  EdgeInsetsGeometry padding = const EdgeInsets.all(0),
 }) {
   return Container(
     decoration: BoxDecoration(
       color: color,
       borderRadius: BorderRadiusGeometry.all(Radius.circular(borderRadius)),
     ),
-    child: Padding(padding: EdgeInsetsGeometry.all(padding), child: child),
+    child: Padding(padding: padding, child: child),
   );
 }
 
@@ -771,6 +753,7 @@ Widget roundedButton({
   required final void Function() onPressed,
   required Widget child,
   ButtonStyle? style,
+  required BuildContext context
 }) {
   return ElevatedButton(
     key: key,
@@ -781,12 +764,17 @@ Widget roundedButton({
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusValue),
           ),
+          backgroundColor: blendColors(
+          context.backgroundColor,
+          context.backgroundOverlay,
+        ),
         ),
     child: child,
   );
 }
 
 Widget clickableCard({
+  Key? key,
   required Widget child,
   void Function()? onTap,
   Color? color,
@@ -794,6 +782,7 @@ Widget clickableCard({
   double borderRadius = radiusValue,
 }) {
   return Card(
+    key: key,
     shadowColor: shadowColor,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -801,7 +790,7 @@ Widget clickableCard({
     color: color,
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(radiusValue),
+      borderRadius: BorderRadius.circular(borderRadius),
       child: child,
     ),
   );
@@ -813,11 +802,13 @@ Widget customButton({
   AlignmentGeometry alignment = Alignment.centerRight,
   MainAxisSize mainAxisSize = MainAxisSize.min,
   double innerPadding = 0,
+  required BuildContext context
 }) {
   return Align(
     alignment: alignment,
     child: roundedButton(
       onPressed: onPressed,
+      context: context,
       child: Padding(
         padding: EdgeInsetsGeometry.all(innerPadding),
         child: Row(
@@ -832,7 +823,7 @@ Widget customButton({
 }
 
 Widget uploadFlow(
-    BuildContext context,{
+  BuildContext context, {
   required List<Widget> children,
   required Widget bottomWidget,
 }) {
@@ -1013,26 +1004,35 @@ Container buttonContainer(Widget child, BuildContext context, Color? color) {
 }
 
 AppBar blurredAppBar({
-  required Widget title,
+  Widget? title,
+  Widget? leading,
   List<Widget>? actions,
   bool? centerTitle,
+  double? leadingWidth,
+  required BuildContext context,
 }) {
   return AppBar(
     centerTitle: centerTitle,
     elevation: 0,
     title: title,
+    leadingWidth: leadingWidth,
+    leading: leading,
     actions: actions,
     flexibleSpace: ClipRRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(color: Colors.transparent),
+        child: Container(
+          color: context.getBrightness == Brightness.dark
+              ? Color(0xFF121212).withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.8),
+        ),
       ),
     ),
   );
 }
 
 Widget topSpacer(BuildContext context) => Container(
-  height: MediaQuery.of(context).padding.top + kToolbarHeight,
+  height: MediaQuery.of(context).padding.top,
   color: Colors.transparent,
 );
 
@@ -1044,4 +1044,170 @@ void toast(String message, {Toast toastLength = Toast.LENGTH_SHORT}) {
     textColor: Colors.white,
     fontSize: 16.0,
   );
+}
+
+Widget roundedImage({
+  required BuildContext context,
+  required String imageUrl,
+  double width = 160,
+  double height = 160,
+}) => Container(
+  decoration: BoxDecoration(
+    color: context.backgroundColor,
+    shape: BoxShape.circle,
+  ),
+  width: width,
+  height: height,
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(999),
+    child: CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: fit,
+      errorWidget: (context, error, stackTrace) {
+        return Icon(Icons.person);
+      },
+    ),
+  ),
+);
+
+class AnimatedIconButton extends StatefulWidget {
+  final void Function() onPressed;
+  final Widget icon;
+
+  const AnimatedIconButton({
+    super.key,
+    required this.onPressed,
+    required this.icon,
+  });
+
+  @override
+  State<AnimatedIconButton> createState() => _AnimatedIconState();
+}
+
+class _AnimatedIconState extends State<AnimatedIconButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 150),
+      lowerBound: 24,
+      upperBound: 35,
+    );
+  }
+
+  void _animate() async {
+    await _controller.forward();
+    await _controller.reverse();
+    widget.onPressed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) => IconButton(
+        iconSize: _controller.value,
+        onPressed: () {
+          _animate();
+          widget.onPressed();
+        },
+        icon: widget.icon,
+      ),
+    );
+  }
+}
+
+Widget pageIndicator(int itemCount, int currentPage) => Padding(
+  padding: EdgeInsets.symmetric(vertical: 2),
+  child: customContainer(
+    borderRadius: 999,
+    child: Padding(
+      padding: EdgeInsets.symmetric(vertical: 2, horizontal: 3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(itemCount, (index) {
+          bool isActive = index == currentPage;
+          return AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            margin: EdgeInsets.symmetric(horizontal: 4),
+            width: isActive ? 12 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isActive ? Colors.white : Colors.grey,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          );
+        }),
+      ),
+    ),
+  ),
+);
+
+class ImagePager extends StatefulWidget {
+  final List<String> imageUrls;
+  final double borderRadius;
+  final double? heightFactor;
+
+  const ImagePager({
+    super.key,
+    required this.imageUrls,
+    this.borderRadius = radiusValue,
+    this.heightFactor,
+  });
+
+  @override
+  State<ImagePager> createState() => _ImagePagerState();
+}
+
+class _ImagePagerState extends State<ImagePager> {
+  int _currentPage = 0;
+  final PageController _controller = PageController();
+
+  @override
+  Widget build(BuildContext context) {
+    double imageHeight = context.getImageHeight * (widget.heightFactor ?? 1);
+
+    Widget propertyImages = SizedBox(
+      width: context.getMaxWidth,
+      height: imageHeight,
+      child: PageView.builder(
+        controller: _controller,
+        itemCount: widget.imageUrls.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentPage = index;
+          });
+        },
+        itemBuilder: (context, index) => imageContainer(
+          widget.imageUrls[index],
+          context: context,
+          borderRadius: widget.borderRadius,
+        ),
+      ),
+    );
+
+    Widget indicator = SizedBox(
+      width: context.getMaxWidth,
+      height: imageHeight,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: pageIndicator(widget.imageUrls.length, _currentPage),
+      ),
+    );
+
+    return Stack(children: [propertyImages, indicator]);
+  }
+}
+
+Color blendColors(Color background, Color tint, {double opacity = 0.1}) {
+  int r = ((1 - opacity) * background.r * 255 + opacity * tint.r * 255).round();
+  int g = ((1 - opacity) * background.g * 255 + opacity * tint.g * 255).round();
+  int b = ((1 - opacity) * background.b * 255 + opacity * tint.b * 255).round();
+
+  return Color.fromARGB((background.a * 255).round(), r, g, b);
 }

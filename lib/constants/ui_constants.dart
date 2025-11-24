@@ -2,37 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-double _maxWidth = 700, _maxHeight = 1080;
-Color backgroundLight = Colors.grey.shade100,
-    backgroundDark = Colors.grey.shade900;
+import '../UI/ui.dart';
 
 NumberFormat currencyFormat = NumberFormat.simpleCurrency(
   locale: 'en_KE',
   name: 'Ksh ',
 );
 
-double textPlaceholderHeight = 14;
+const double _maxWidth = 700,
+    _maxHeight = 1080,
+    textPlaceholderHeight = 14,
+    paddingValue = 8.0,
+    radiusValue = 8.0,
+    spacingValue = 16.0;
+const Size imageRes = Size(200, 200);
+const int pageTransitionDuration = 300;
+const paddingValueAll = EdgeInsets.all(paddingValue);
+const paddingValueHorizontal = EdgeInsets.symmetric(horizontal: paddingValue);
+const fit = BoxFit.cover;
 
 double getTopCardWidth(double screenWidth) => 0.29 * screenWidth;
 
 double getTopCardHeight(double screenHeight) => 0.2 * screenHeight;
 
 double getTopIconWidth(double screenWidth) => screenWidth * 0.1;
-Size imageRes = Size(200, 200);
-
-const paddingValue = 8.0, radiusValue = 16.0, spacingValue = 16.0;
-const paddingValueAll = EdgeInsets.all(paddingValue);
-const paddingValueHorizontal = EdgeInsets.symmetric(horizontal: paddingValue);
-const fit = BoxFit.cover;
 
 extension CustomHelpers on BuildContext {
   Brightness get getBrightness => Theme.of(this).brightness;
 
-  Color get backgroundColor => Theme.of(this).brightness == Brightness.dark
-      ? backgroundDark
-      : backgroundLight;
+  Color get backgroundOverlay => Colors.blue;
 
-  Color get highlightColor => Colors.blue.shade300;
+  Color get backgroundColor => Color(0xFF121212);
+
+  Color get tintedBackgroundColor =>
+      blendColors(backgroundColor, backgroundOverlay);
+
+  Color get highlightColor => Colors.blue.shade900;
 
   double get alpha => Theme.of(this).brightness == Brightness.dark ? 0.1 : 0.3;
 
@@ -65,12 +70,12 @@ extension CustomHelpers on BuildContext {
 
   double get getTopIconWidth => screenWidth > _maxWidth ? 60 : 30;
 
-  double get getImageHeight => screenHeight > _maxHeight ? 400 : 200;
+  double get getImageHeight => screenHeight > _maxHeight ? 600 : 200;
 
   Color get getSurfaceColor => Theme.of(this).colorScheme.surface;
 }
 
-IconData filterIcon = Symbols.tune_rounded,
+const IconData filterIcon = Symbols.tune_rounded,
     apartmentIcon = Symbols.apartment_rounded,
     editIcon = Symbols.edit_rounded,
     lightModeIcon = Symbols.light_mode_rounded,

@@ -32,10 +32,9 @@ class _SearchPageState extends State<SearchPage> {
     double longitude = viewModel.locationData?.longitude ?? defaultLongitude;
     double latitude = viewModel.locationData?.latitude ?? defaultLatitude;
 
-    Widget searchField = SearchBar(
+    Widget searchField = PlainTextField(
       controller: searchController,
-      elevation: WidgetStatePropertyAll(0),
-      hintText: 'Search properties',
+      hint: Text('Search properties'),
       onChanged: (value) {
         viewModel.search(value);
       },

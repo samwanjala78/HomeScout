@@ -48,6 +48,7 @@ class _PropertyFeaturesState extends State<PropertyFeatures> {
           children: [
             Expanded(
               child: customButton(
+                context: context,
                 onPressed: () {
                   globalBuildContext?.pop();
                 },
@@ -60,6 +61,7 @@ class _PropertyFeaturesState extends State<PropertyFeatures> {
             ),
             Expanded(
               child: customButton(
+                context: context,
                 onPressed: () {
                   _navigateToUploadPhotos(viewmodel);
                 },
@@ -115,7 +117,7 @@ Widget uploadFeaturesGrid({
               ),
               tileColor: isFeatureSelected[index]
                   ? Colors.blue.withValues(alpha: context.alpha)
-                  : context.backgroundColor,
+                  : Colors.grey.shade300,
               titleTextStyle: context.bodyMedium,
               onTap: () {
                 onTap(index);

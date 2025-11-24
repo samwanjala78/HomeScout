@@ -69,6 +69,7 @@ Widget loginForm({
           ),
         ),
         roundedButton(
+          context: context,
           key: ValueKey("login"),
           onPressed: () async {
             loginBegin();
@@ -89,6 +90,7 @@ Widget loginForm({
         ),
 
         roundedButton(
+          context: context,
           key: ValueKey("forgotPassword"),
           onPressed: () async {
             navigate(path: emailPath);
@@ -223,6 +225,7 @@ Widget signupForm({
           ),
         ),
         roundedButton(
+          context: context,
           key: ValueKey("Signup_button"),
           onPressed: () async {
             registerBegin();

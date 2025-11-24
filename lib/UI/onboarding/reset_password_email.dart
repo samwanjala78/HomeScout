@@ -48,6 +48,7 @@ class _EmailPageState extends State<EmailPage> {
               ),
             ),
             roundedButton(
+              context: context,
               key: ValueKey("confirm"),
               onPressed: () async {
                 if (_emailFormKey.currentState!.validate()) {

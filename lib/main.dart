@@ -3,25 +3,25 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:real_estate/UI/main_pages/detail.dart';
-import 'package:real_estate/UI/main_pages/home.dart';
-import 'package:real_estate/UI/main_pages/profile.dart';
-import 'package:real_estate/UI/main_pages/saved.dart';
-import 'package:real_estate/UI/main_pages/search.dart';
-import 'package:real_estate/UI/onboarding/profile_setup.dart';
-import 'package:real_estate/UI/onboarding/reset_password.dart';
-import 'package:real_estate/UI/onboarding/reset_password_email.dart';
-import 'package:real_estate/UI/ui.dart';
-import 'package:real_estate/UI/upload/search_location.dart';
-import 'package:real_estate/UI/upload/upload_flow_library.dart';
-import 'package:real_estate/constants/ui_constants.dart';
-import 'package:real_estate/data/viewmodel.dart';
+import 'package:provider/provider.dart';
 import 'package:real_estate/util/util.dart';
-
+import 'UI/main_pages/detail.dart';
+import 'UI/main_pages/home.dart';
+import 'UI/main_pages/profile.dart';
+import 'UI/main_pages/saved.dart';
+import 'UI/main_pages/search.dart';
 import 'UI/onboarding/landing_page.dart';
+import 'UI/onboarding/profile_setup.dart';
+import 'UI/onboarding/reset_password.dart';
+import 'UI/onboarding/reset_password_email.dart';
+import 'UI/ui.dart';
+import 'UI/upload/search_location.dart';
+import 'UI/upload/upload_flow_library.dart';
+import 'constants/ui_constants.dart';
+import 'data/viewmodel.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -73,21 +73,87 @@ class MyApp extends StatelessWidget {
       routes: [
         GoRoute(
           path: signInPath,
-          pageBuilder: (context, state) => MaterialPage(child: SignInPage()),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            transitionDuration: const Duration(
+              milliseconds: pageTransitionDuration,
+            ),
+            child: SignInPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+          ),
         ),
         GoRoute(
           path: emailPath,
-          pageBuilder: (context, state) => MaterialPage(child: EmailPage()),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            transitionDuration: const Duration(
+              milliseconds: pageTransitionDuration,
+            ),
+            child: EmailPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+          ),
         ),
         GoRoute(
           path: resetPasswordPath,
-          pageBuilder: (context, state) =>
-              MaterialPage(child: ResetPasswordPage()),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            transitionDuration: const Duration(
+              milliseconds: pageTransitionDuration,
+            ),
+            child: ResetPasswordPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+          ),
         ),
         GoRoute(
           path: profileSetupPath,
-          pageBuilder: (context, state) =>
-              MaterialPage(child: ProfileSetupPage()),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            transitionDuration: const Duration(
+              milliseconds: pageTransitionDuration,
+            ),
+            child: ProfileSetupPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+          ),
         ),
         ShellRoute(
           builder: (context, state, child) {
@@ -96,21 +162,87 @@ class MyApp extends StatelessWidget {
           routes: [
             GoRoute(
               path: homePath,
-              pageBuilder: (context, state) => MaterialPage(child: HomePage()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: HomePage(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
             GoRoute(
               path: searchPagePath,
-              pageBuilder: (context, state) =>
-                  MaterialPage(child: SearchPage()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: SearchPage(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
             GoRoute(
               path: savedPath,
-              pageBuilder: (context, state) => MaterialPage(child: SavedPage()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: SavedPage(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
             GoRoute(
               path: profilePath,
-              pageBuilder: (context, state) =>
-                  MaterialPage(child: ProfilePage()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: ProfilePage(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
           ],
         ),
@@ -121,35 +253,131 @@ class MyApp extends StatelessWidget {
           routes: [
             GoRoute(
               path: basicInfoPath,
-              pageBuilder: (context, state) =>
-                  MaterialPage(child: BasicInformation()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: BasicInformation(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
             GoRoute(
               path: featuresPath,
-              pageBuilder: (context, state) =>
-                  MaterialPage(child: PropertyFeatures()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: PropertyFeatures(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
             GoRoute(
               path: uploadPhotosPath,
-              pageBuilder: (context, state) =>
-                  MaterialPage(child: UploadPhotos()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: UploadPhotos(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
             GoRoute(
               path: contactInfoPath,
-              pageBuilder: (context, state) =>
-                  MaterialPage(child: ContactInformation()),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                transitionDuration: const Duration(
+                  milliseconds: pageTransitionDuration,
+                ),
+                child: ContactInformation(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      final offsetAnimation = Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+              ),
             ),
           ],
         ),
         GoRoute(
           path: detailPath,
-          pageBuilder: (context, state) => MaterialPage(child: DetailPage()),
+          pageBuilder: (context, state) => CustomTransitionPage(
+            transitionDuration: const Duration(
+              milliseconds: pageTransitionDuration,
+            ),
+            child: DetailPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+          ),
         ),
         GoRoute(
           path: searchPath,
-          pageBuilder: (context, state) {
-            return MaterialPage(child: SearchLocation());
-          },
+          pageBuilder: (context, state) => CustomTransitionPage(
+            transitionDuration: const Duration(
+              milliseconds: pageTransitionDuration,
+            ),
+            child: SearchLocation(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+          ),
         ),
       ],
       navigatorKey: navigatorKey,
@@ -162,21 +390,28 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.latoTextTheme(ThemeData.light().textTheme),
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white.withValues(alpha: .8),
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          surfaceTintColor: Colors.blue,
+          elevation: 8,
         ),
         colorScheme: ColorScheme.light(primary: Colors.blue),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.dark(primary: Colors.blue),
-        scaffoldBackgroundColor: Colors.black12,
+        scaffoldBackgroundColor: Color(0xFF121212),
         textTheme: GoogleFonts.latoTextTheme(ThemeData.dark().textTheme),
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.black.withValues(alpha: .8),
+          backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
         ),
         cardTheme: CardThemeData(
-          color: Colors.black12,
-          surfaceTintColor: Colors.white,
+          color: context.backgroundColor,
+          surfaceTintColor: Colors.blue,
+          elevation: 8,
         ),
       ),
       themeMode: ThemeMode.system,
@@ -195,12 +430,12 @@ class MainScaffold extends StatefulWidget {
 }
 
 var _index = 0;
-var _title = "";
 List<bool> _isSelected = List.generate(4, (index) => index == 0);
 
 class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) {
+    PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(context);
     final location = GoRouterState.of(context).uri.toString();
 
     if (location.contains(homePath)) {
@@ -216,8 +451,29 @@ class _MainScaffoldState extends State<MainScaffold> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: blurredAppBar(
-        title: Text(_title),
+        leadingWidth: 150,
+        leading: Padding(
+          padding: EdgeInsets.all(4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              roundedImage(
+                context: context,
+                imageUrl: viewModel.currentUser?.profilePicUrl ?? "",
+                width: 40,
+                height: 40,
+              ),
+              FadedText(
+                viewModel.currentUser?.firstName != null
+                    ? "Hello, ${viewModel.currentUser?.firstName}"
+                    : "",
+                style: context.titleMedium,
+              ),
+            ],
+          ),
+        ),
         actions: [IconButton(icon: Icon(notificationIcon), onPressed: () {})],
+        context: context,
       ),
       extendBodyBehindAppBar: true,
       extendBody: true,
@@ -231,45 +487,40 @@ class _MainScaffoldState extends State<MainScaffold> {
               highlightColor: Colors.transparent,
             ),
             child: BottomNavigationBar(
-              elevation: 0,
-              backgroundColor: context.getBrightness == Brightness.dark
-                  ? Colors.black.withValues(alpha: 0.8)
-                  : Colors.white.withValues(alpha: 0.8),
+              elevation: 8,
               currentIndex: _index,
               type: BottomNavigationBarType.fixed,
+              backgroundColor: context.getBrightness == Brightness.dark
+                  ? Color(0xFF121212).withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.8),
               showUnselectedLabels: true,
               selectedItemColor: context.getBrightness == Brightness.dark
                   ? Colors.blue.shade300
                   : Colors.blue.shade900,
               unselectedItemColor: context.getBrightness == Brightness.dark
-                  ? Colors.white
-                  : Colors.grey,
+                  ? Colors.grey.shade600
+                  : Colors.grey.shade300,
               onTap: (index) async {
                 if (index == 0) {
                   _isSelected.forEachIndexed((isSelectedIndex, _) {
                     _isSelected[isSelectedIndex] = isSelectedIndex == index;
                   });
-                  _title = "";
                   navigateToHomePage(context);
                 } else if (index == 1) {
                   _isSelected.forEachIndexed((isSelectedIndex, _) {
                     _isSelected[isSelectedIndex] = isSelectedIndex == index;
                   });
                   context.pushReplacement(searchPagePath);
-                  setState(() {
-                    _title = "Search";
-                  });
+                  setState(() {});
                 } else if (index == 2) {
                   _isSelected.forEachIndexed((isSelectedIndex, _) {
                     _isSelected[isSelectedIndex] = isSelectedIndex == index;
                   });
-                  _title = "Saved";
                   navigateToSavedPage(context);
                 } else {
                   _isSelected.forEachIndexed((isSelectedIndex, _) {
                     _isSelected[isSelectedIndex] = isSelectedIndex == index;
                   });
-                  _title = "Profile";
                   navigateToProfile(context);
                 }
               },
@@ -282,7 +533,6 @@ class _MainScaffoldState extends State<MainScaffold> {
                   ),
                   label: "Home",
                 ),
-
                 BottomNavigationBarItem(
                   icon: buttonContainer(
                     Icon(searchIcon),
@@ -291,7 +541,6 @@ class _MainScaffoldState extends State<MainScaffold> {
                   ),
                   label: "Search",
                 ),
-
                 BottomNavigationBarItem(
                   icon: buttonContainer(
                     Icon(favoriteIcon, fill: 1),
@@ -300,7 +549,6 @@ class _MainScaffoldState extends State<MainScaffold> {
                   ),
                   label: "Saved",
                 ),
-
                 BottomNavigationBarItem(
                   icon: buttonContainer(
                     Icon(personIcon, fill: 1),
@@ -314,7 +562,10 @@ class _MainScaffoldState extends State<MainScaffold> {
           ),
         ),
       ),
-      body: widget.body,
+      body: Padding(
+        padding: EdgeInsetsGeometry.only(top: 8),
+        child: widget.body,
+      ),
     );
   }
 }

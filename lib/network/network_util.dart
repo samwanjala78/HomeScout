@@ -17,24 +17,18 @@ enum Queries { liked, location, title }
 
 enum Method { get, post, put, delete }
 
+final String _baseUrl = "https://propertiesbackend.onrender.com";
+
 class _NetworkLayer {
-  final String _basePropertiesUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/properties";
-  final String _searchProperties =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/search?q=";
-  final String _registerUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/register";
-  final String _loginUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/login";
-  final String _userUrl = "https://porky-reagan-pouncingly.ngrok-free.dev/user";
-  final String _validateTokenUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/validate";
-  final String _viewsUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/views";
-  final String _accountLookUpUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/userAcc";
-  final String _countUrl =
-      "https://porky-reagan-pouncingly.ngrok-free.dev/properties/count";
+  final String _propertiesUrl = "$_baseUrl/properties";
+  final String _searchProperties = "$_baseUrl/search?q=";
+  final String _registerUrl = "$_baseUrl/register";
+  final String _loginUrl = "$_baseUrl/login";
+  final String _userUrl = "$_baseUrl/user";
+  final String _validateTokenUrl = "$_baseUrl/validate";
+  final String _viewsUrl = "$_baseUrl/views";
+  final String _accountLookUpUrl = "$_baseUrl/userAcc";
+  final String _countUrl = "$_baseUrl/properties/count";
 
   final String savedPropertyQuery = "${Queries.liked.name}=true";
 
@@ -110,7 +104,7 @@ class _NetworkLayer {
     for (var imageFile in compressedImage) {
       final request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://porky-reagan-pouncingly.ngrok-free.dev/upload"),
+        Uri.parse("$_baseUrl/upload"),
       );
 
       request.files.add(
@@ -161,7 +155,7 @@ class _NetworkLayer {
 
   Future<Property?> createProperty(Property property) async {
     final body = await request(
-      _basePropertiesUrl,
+      _propertiesUrl,
       body: property.toJson(),
       method: Method.post,
     );
@@ -170,7 +164,7 @@ class _NetworkLayer {
   }
 
   Future<List<Property>> getProperties() async {
-    List<dynamic> body = await request(_basePropertiesUrl, method: Method.get);
+    List<dynamic> body = await request(_propertiesUrl, method: Method.get);
     return body.map((property) => Property.fromJson(property)).toList();
   }
 
@@ -189,7 +183,7 @@ class _NetworkLayer {
 
   Future<List<Property>> queryProperties(String queries) async {
     List<dynamic> body = await request(
-      "$_basePropertiesUrl?$queries",
+      "$_propertiesUrl?$queries",
       method: Method.get,
     );
     return body.map((property) => Property.fromJson(property)).toList();
@@ -197,7 +191,7 @@ class _NetworkLayer {
 
   Future<Property?> updateProperty(Property property) async {
     Map<String, dynamic> body = await request(
-      "$_basePropertiesUrl/${property.id}",
+      "$_propertiesUrl/${property.id}",
       body: property.toJson(),
       method: Method.put,
     );
@@ -206,7 +200,7 @@ class _NetworkLayer {
   }
 
   Future<void> deleteProperty(String id) async {
-    await request("$_basePropertiesUrl/$id", method: Method.delete);
+    await request("$_propertiesUrl/$id", method: Method.delete);
   }
 
   Future<User?> signUp(User user) async {

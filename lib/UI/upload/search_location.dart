@@ -113,6 +113,9 @@ class _SearchLocationState extends State<SearchLocation> {
       child: Padding(
         padding: paddingValueHorizontal,
         child: SearchBar(
+          backgroundColor: WidgetStatePropertyAll(
+            context.tintedBackgroundColor,
+          ),
           elevation: WidgetStatePropertyAll(0),
           controller: _controller,
           trailing: [
@@ -207,6 +210,7 @@ class _SearchLocationState extends State<SearchLocation> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         customButton(
+          context: context,
           onPressed: () {
             context.pop();
           },
@@ -216,6 +220,7 @@ class _SearchLocationState extends State<SearchLocation> {
           ],
         ),
         customButton(
+          context: context,
           onPressed: () {
             if (viewModel.uploadProperty.location.isNotEmpty) {
               context.pop();
@@ -231,10 +236,11 @@ class _SearchLocationState extends State<SearchLocation> {
       ],
     );
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(title: Text("Choose location")),
-        body: SpacedColumn(
+    return Scaffold(
+      appBar: AppBar(title: Text("Choose location")),
+      body: Padding(
+        padding: EdgeInsets.only(bottom: 16),
+        child: SpacedColumn(
           crossAxisAlignment: CrossAxisAlignment.start,
           padding: 0,
           mainAxisAlignment: MainAxisAlignment.start,

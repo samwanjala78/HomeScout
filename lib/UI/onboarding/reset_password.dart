@@ -65,6 +65,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               ),
             ),
             roundedButton(
+              context: context,
               key: ValueKey("Confirm"),
               onPressed: () async {
                 if (userPassword != confirmUserPassword) {

@@ -119,6 +119,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
         children: [
           Expanded(
             child: customButton(
+              context: context,
               onPressed: () {
                 context.pop();
               },
@@ -131,6 +132,7 @@ class _UploadPhotosState extends State<UploadPhotos> {
           ),
           Expanded(
             child: customButton(
+              context: context,
               onPressed: () {
                 if (imageFiles.isNotEmpty) {
                   navigateToContactInfo(

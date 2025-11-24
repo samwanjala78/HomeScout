@@ -19,30 +19,13 @@ class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
     PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(context);
+
     var selectedPropertyIndex = GoRouterState.of(context).extra as int;
-    final currentProperty = viewModel.properties[selectedPropertyIndex];
+    var currentProperty = viewModel.properties[selectedPropertyIndex];
 
-    Widget image = imageContainer(
-      currentProperty,
-      context: context,
-      borderRadius: 0,
-    );
-
-    Widget imageControlButtons = Positioned.fill(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(arrowBackAltIcon, color: Colors.white),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(arrowFowardAltIcon, color: Colors.white),
-          ),
-        ],
-      ),
+    Widget image = ImagePager(
+      imageUrls: currentProperty.imageUrls,
+      heightFactor: 1.2,
     );
 
     Widget actions = Padding(
@@ -50,42 +33,42 @@ class _DetailPageState extends State<DetailPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black54,
-              shape: BoxShape.circle,
-            ),
+          customContainer(
             child: IconButton(
               onPressed: context.pop,
               icon: Icon(arrowBack, color: Colors.white),
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black54,
-              shape: BoxShape.circle,
-            ),
+          customContainer(
             child: IconButton(
-              onPressed: context.pop,
-              icon: Icon(favoriteIcon, color: Colors.white),
+              onPressed: () async {
+                Property updated = currentProperty.copyWith(
+                  liked: !currentProperty.liked,
+                );
+                Property? newProperty = await viewModel.updateProperty(updated);
+                if (newProperty != null) {
+                  setState(() {
+                    currentProperty = newProperty;
+                  });
+                }
+              },
+              icon: Icon(
+                favoriteIcon,
+                color: currentProperty.liked ? Colors.red : Colors.white,
+                fill: currentProperty.liked ? 1.0 : 0.0,
+              ),
             ),
           ),
         ],
       ),
     );
 
-    Widget imageCarousel = Stack(
-      children: [image, imageControlButtons, actions],
-    );
+    Widget imageCarousel = Stack(children: [image, actions]);
 
     Widget infoColumn(String type, IconData icon, String property) {
       return SpacedColumn(
         spacing: spacingValue / 4,
-        children: [
-          Icon(icon),
-          FadedText(property),
-          FadedText(type),
-        ],
+        children: [Icon(icon), FadedText(property), FadedText(type)],
       );
     }
 

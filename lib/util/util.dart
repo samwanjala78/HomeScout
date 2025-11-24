@@ -127,8 +127,8 @@ Future<XFile?> pickImageFromCamera() async {
   return await _picker.pickImage(source: ImageSource.camera);
 }
 
-Future<XFile?> pickImageFromGallery() async {
-  return await _picker.pickImage(source: ImageSource.gallery);
+Future<List<XFile>> pickImagesFromGallery() async {
+  return await _picker.pickMultiImage(limit: 10);
 }
 
 Future<void> requestCameraPermission({required Function isGranted}) async {
@@ -255,3 +255,5 @@ extension CurrencyParsing on String {
     return int.parse(numericString);
   }
 }
+
+

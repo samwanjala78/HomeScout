@@ -68,7 +68,10 @@ class _BasicInformationPageState extends State<BasicInformation> {
               hintText: "e.g., for rent",
               inputDecorationTheme: InputDecorationTheme(
                 filled: true,
-                fillColor: context.backgroundColor,
+                fillColor: blendColors(
+                  context.backgroundColor,
+                  context.backgroundOverlay,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide.none,
                   borderRadius: BorderRadius.circular(999),
@@ -146,6 +149,7 @@ class _BasicInformationPageState extends State<BasicInformation> {
               Expanded(
                 child: IntrinsicWidth(
                   child: customButton(
+                    context: context,
                     onPressed: () {
                       globalBuildContext?.pushReplacement(homePath);
                     },
@@ -160,6 +164,7 @@ class _BasicInformationPageState extends State<BasicInformation> {
               Expanded(
                 child: IntrinsicWidth(
                   child: customButton(
+                    context: context,
                     onPressed: () {
                       if (_basicInfoFormKey.currentState!.validate()) {
                         navigate(path: featuresPath);

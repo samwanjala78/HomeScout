@@ -77,6 +77,7 @@ class _ContactInformationState extends State<ContactInformation> {
           children: [
             Expanded(
               child: customButton(
+                context: context,
                 onPressed: () {
                   globalBuildContext?.pop();
                 },
@@ -89,6 +90,7 @@ class _ContactInformationState extends State<ContactInformation> {
             ),
             Expanded(
               child: customButton(
+                context: context,
                 onPressed: () {
                   if (_contactInfoFormKey.currentState!.validate()) {
                     submitListing(

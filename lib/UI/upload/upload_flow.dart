@@ -28,14 +28,13 @@ class _UploadPageState extends State<UploadPage> {
           FadedText("Step $pageNumber of 4", style: context.bodyMedium),
         ],
       ),
+      context: context,
     );
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: appbar,
-        extendBodyBehindAppBar: true,
-        body: widget.body,
-      ),
+    return Scaffold(
+      appBar: appbar,
+      extendBodyBehindAppBar: true,
+      body: Padding(padding: EdgeInsets.only(bottom: 16), child: widget.body),
     );
   }
 }

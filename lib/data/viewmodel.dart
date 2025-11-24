@@ -78,10 +78,8 @@ class PropertiesViewModel extends ChangeNotifier {
   XFile? get profilePic => _profilePic;
   List<Property> _properties = [];
   List<Property> _likedProperties = [];
-  List<Property> _filteredProperties = [];
 
-  List<Property> get properties =>
-      _filteredProperties.isEmpty ? _properties : _filteredProperties;
+  List<Property> get properties => _properties;
 
   List<Property> get likedProperties => _likedProperties;
 
@@ -196,11 +194,11 @@ class PropertiesViewModel extends ChangeNotifier {
     return await NetworkLayer.updateProperty(property);
   }
 
-  void filterProperties(bool Function(Property) test) {
-    _filteredProperties = _properties
+  Future<void> filterProperties(bool Function(Property) test) async {
+    await getProperties();
+    _properties = _properties
         .where((property) => test(property))
         .toList();
-    log("${_filteredProperties.length}");
     notifyListeners();
   }
 
@@ -210,8 +208,8 @@ class PropertiesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetProperties() {
-    _filteredProperties.clear();
+  Future<void> resetProperties() async {
+    await getProperties();
     notifyListeners();
   }
 }

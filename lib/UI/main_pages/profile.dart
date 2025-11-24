@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -30,30 +29,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     PropertiesViewModel viewModel = Provider.of<PropertiesViewModel>(context);
 
-    Widget picture = ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: CachedNetworkImage(
-        imageUrl: viewModel.currentUser?.profilePicUrl ?? "",
-        fit: fit,
-        errorWidget: (context, error, stackTrace) {
-          return Icon(Icons.person);
-        },
-      ),
-    );
-
     Widget profilePic = Align(
       alignment: Alignment.topCenter,
       child: SpacedColumn(
         padding: 0,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: context.backgroundColor,
-              shape: BoxShape.circle,
-            ),
-            width: 160,
-            height: 160,
-            child: picture,
+          roundedImage(
+            context: context,
+            imageUrl: viewModel.currentUser?.profilePicUrl ?? "",
           ),
           Text(
             viewModel.currentUser?.firstName ?? "",
